@@ -64,7 +64,9 @@ function tvApp() {
         dateStr: '',
         roomNo: '',
         hotelLogo: '',
-        weatherStr: 'Mumbai 28°C / 82°F',
+        weatherStr: '',
+        toastMessage: '',
+        toastTimer: null,
         greetingStr: 'Good Afternoon, Guest',
 
         // Adaptive Menu Carousel
@@ -92,6 +94,9 @@ function tvApp() {
             this.updateClock();
             this.updateGreeting();
             this.updateWeatherStr();
+            if (typeof this.initWeatherBackgroundSync === 'function') {
+                this.initWeatherBackgroundSync();
+            }
             setInterval(() => {
                 this.updateClock();
                 this.updateGreeting();
@@ -223,9 +228,19 @@ function tvApp() {
         },
 
         updateWeatherStr() {
-            const city = this.hotelData.weather?.city || this.hotelData.hotel?.city || this.t('city_name', 'Mumbai');
-            const temp = this.hotelData.weather?.temp_str || this.hotelData.weather?.temp || '28°C / 82°F';
-            this.weatherStr = `${city} ${temp}`.trim();
+            if (typeof this.updateWeatherHeaderStr === 'function') {
+                this.updateWeatherHeaderStr();
+            } else {
+                this.weatherStr = '';
+            }
+        },
+
+        showToast(msg) {
+            this.toastMessage = msg;
+            if (this.toastTimer) clearTimeout(this.toastTimer);
+            this.toastTimer = setTimeout(() => {
+                this.toastMessage = '';
+            }, 3000);
         },
 
         // --- MENU CONTROLLER ---
@@ -333,10 +348,21 @@ function tvApp() {
                 }, 200);
                 return;
             }
+
+            if (item.id === 'weather' && !navigator.onLine) {
+                this.showToast('No Internet Connection. Please connect to internet.');
+                return;
+            }
+
             this.navigate(item.id);
         },
 
         navigate(viewId) {
+            if (viewId === 'weather' && !navigator.onLine) {
+                this.showToast('No Internet Connection. Please connect to internet.');
+                return;
+            }
+
             if (this.currentView !== viewId) {
                 this.viewHistory.push(this.currentView);
                 this.currentView = viewId;

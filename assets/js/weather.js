@@ -4,8 +4,10 @@
  * - 100% Dynamic City: Extracted strictly from data.json (hotel.city -> hotel.hotel_location -> weather.city)
  * - Zero Hardcoded Cities, Coordinates, or Dummy Fallback Temperatures
  * - Open-Meteo Geocoding + High-Precision Forecast + Air Quality (US AQI)
- * - Live Real-Time Manual & Auto Refresh with Real-Time "Last Updated" timestamp
- * - Dynamic LocalStorage Cache + Local Fallback Protection
+ * - Background Auto-Sync on Template Load with 15-Minute Polling Interval
+ * - Dynamic Header Weather Display (City + °C / °F)
+ * - Offline Protection: If offline, hides header weather and prevents API requests
+ * - Live Real-Time Manual Refresh with Real-Time "Last Updated" timestamp
  * - Full Multilingual Localization support
  */
 'use strict';
@@ -20,8 +22,72 @@ window.TVWeatherController = {
     weatherIsCached: false,
     weatherLastUpdated: '',
     weatherRefreshTimer: null,
+    weatherPollIntervalMs: 15 * 60 * 1000, // 15 Minutes auto background sync
+
+    initWeatherBackgroundSync() {
+        this.weatherCity = this.resolveWeatherCity();
+
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            console.log('[TVWeather] Network online detected. Triggering background sync.');
+            this.loadWeatherData(true).then(() => {
+                this.updateWeatherHeaderStr();
+            }).catch(() => {});
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('[TVWeather] Network offline detected. Hiding weather.');
+            this.updateWeatherHeaderStr();
+        });
+
+        // Initial background fetch on load
+        if (navigator.onLine) {
+            this.loadWeatherData(false).then(() => {
+                this.updateWeatherHeaderStr();
+            }).catch(() => {});
+        } else {
+            this.weatherStr = ''; // Hidden if offline
+        }
+
+        // Setup 15-minute background auto-refresh timer
+        if (this.weatherRefreshTimer) clearInterval(this.weatherRefreshTimer);
+        this.weatherRefreshTimer = setInterval(() => {
+            if (navigator.onLine) {
+                console.log('[TVWeather] 15-minute background refresh triggered.');
+                this.loadWeatherData(true).then(() => {
+                    this.updateWeatherHeaderStr();
+                }).catch(() => {});
+            } else {
+                this.weatherStr = '';
+            }
+        }, this.weatherPollIntervalMs);
+    },
+
+    updateWeatherHeaderStr() {
+        if (!navigator.onLine) {
+            this.weatherStr = ''; // Hide on Home Screen if offline
+            return;
+        }
+
+        const cur = this.weatherData?.current;
+        if (cur && cur.temp !== null && cur.temp !== undefined) {
+            const c = cur.temp;
+            const f = Math.round((c * 9) / 5 + 32);
+            const city = this.weatherData.city || this.weatherCity || this.resolveWeatherCity() || '';
+            this.weatherStr = `${city} ${c > 0 ? '+' : ''}${c}°C / ${f}°F`.trim();
+        } else {
+            this.weatherStr = '';
+        }
+    },
 
     async openWeather() {
+        if (!navigator.onLine) {
+            if (typeof this.showToast === 'function') {
+                this.showToast('No Internet Connection. Please connect to internet.');
+            }
+            return;
+        }
+
         this.weatherCity = this.resolveWeatherCity();
         await this.loadWeatherData(false);
         this.$nextTick(() => {
@@ -57,13 +123,22 @@ window.TVWeatherController = {
     },
 
     async refreshWeather() {
+        if (!navigator.onLine) {
+            if (typeof this.showToast === 'function') {
+                this.showToast('No Internet Connection. Please connect to internet.');
+            }
+            return;
+        }
+
         if (this.isRefreshing || this.weatherLoading) return;
         this.isRefreshing = true;
+
         try {
             await this.loadWeatherData(true);
+            this.updateWeatherHeaderStr();
             if (typeof this.showToast === 'function') {
                 const temp = this.weatherData?.current?.temp !== null ? `${this.weatherData.current.temp > 0 ? '+' : ''}${this.weatherData.current.temp}°C` : '';
-                this.showToast(`Live weather refreshed for ${this.weatherCity} ${temp}`.trim());
+                this.showToast(`Live weather updated: ${this.weatherCity} ${temp}`.trim());
             }
         } finally {
             setTimeout(() => { this.isRefreshing = false; }, 600);
@@ -71,6 +146,14 @@ window.TVWeatherController = {
     },
 
     async loadWeatherData(force = false) {
+        // If offline: do NOT hit API at all!
+        if (!navigator.onLine) {
+            this.weatherLoading = false;
+            this.weatherError = 'No Internet Connection. Please connect to internet.';
+            this.updateWeatherHeaderStr();
+            return;
+        }
+
         const city = this.resolveWeatherCity();
         this.weatherCity = city;
 
@@ -82,7 +165,7 @@ window.TVWeatherController = {
 
         const cacheKey = `weather_cache_${city.toLowerCase().replace(/\s+/g, '_')}`;
         const timeKey = `weather_cache_time_${city.toLowerCase().replace(/\s+/g, '_')}`;
-        const maxAge = 30 * 60 * 1000; // 30 minutes
+        const maxAge = this.weatherPollIntervalMs; // 15 minutes cache lifetime
 
         // 1. Check valid cache if not forced
         if (!force) {
@@ -95,15 +178,10 @@ window.TVWeatherController = {
                     this.weatherIsCached = false;
                     this.weatherLoading = false;
                     this.weatherError = null;
+                    this.updateWeatherHeaderStr();
                     return;
                 }
             } catch (_) {}
-        }
-
-        // 2. Fetch fresh weather online
-        if (!navigator.onLine) {
-            this.loadCachedOrFallbackWeather(city, cacheKey);
-            return;
         }
 
         this.weatherLoading = true;
@@ -172,15 +250,18 @@ window.TVWeatherController = {
             this.weatherLoading = false;
             this.weatherError = null;
 
-            // Save to LocalStorage
+            // Save to LocalStorage cache (15 min expiry)
             try {
                 localStorage.setItem(cacheKey, JSON.stringify(formatted));
                 localStorage.setItem(timeKey, Date.now().toString());
             } catch (_) {}
 
+            this.updateWeatherHeaderStr();
+
         } catch (err) {
             console.warn('[TVWeather] Dynamic fetch warning:', err);
             this.loadCachedOrFallbackWeather(city, cacheKey);
+            this.updateWeatherHeaderStr();
         }
     },
 

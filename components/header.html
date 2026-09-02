@@ -44,9 +44,11 @@
                 <div class="text-3xl font-extrabold text-white tracking-wide drop-shadow-lg leading-none">
                     <span class="mr-2" x-text="t('room_label', 'Room')">Room</span><span class="text-amber-400 font-black" x-text="roomNo || '----'">----</span>
                 </div>
-                <div class="text-3xl font-extrabold text-white tracking-wide drop-shadow-lg mt-3 leading-none">
-                    <span x-text="weatherStr || 'Mumbai 28°C / 82°F'">Mumbai 28°C / 82°F</span>
-                </div>
+                <template x-if="weatherStr">
+                    <div class="text-3xl font-extrabold text-white tracking-wide drop-shadow-lg mt-3 leading-none">
+                        <span x-text="weatherStr"></span>
+                    </div>
+                </template>
             </div>
         </template>
     </div>
