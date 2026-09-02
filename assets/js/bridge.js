@@ -206,6 +206,15 @@
             return callNative('clearConfig', []);
         },
 
+        /**
+         * Save weather forecast payload into local device cache/file on TV
+         * @param {Object} weatherData - Weather forecast payload
+         * @returns {Promise<Object>} { success: boolean }
+         */
+        saveWeatherData(weatherData) {
+            return callNative('saveWeatherData', [weatherData]);
+        },
+
         // --------------------------------------------------------------------
         // 2. TV CONTROL, APPLICATIONS & HARDWARE PORTS
         // --------------------------------------------------------------------

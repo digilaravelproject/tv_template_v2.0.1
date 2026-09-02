@@ -289,50 +289,61 @@ window.TVWeatherController = {
             }
         } catch (_) {}
 
-        // Local fallback JSON file
+        // Local fallback JSON file (safely handles empty or blank file in pure Vanilla JS)
         try {
             const res = await fetch(`assets/data/weather_data.json?t=${Date.now()}`);
             if (res.ok) {
-                const raw = await res.json();
-                const cur = raw.current || {};
-                const d = raw.daily || {};
-                const ext = raw.extracted_data || {};
+                const text = await res.text();
+                if (text && text.trim().length > 2) {
+                    const raw = JSON.parse(text);
+                    if (raw && (raw.current?.temperature_2m !== undefined || raw.extracted_data?.temp !== undefined)) {
+                        const cur = raw.current || {};
+                        const d = raw.daily || {};
+                        const ext = raw.extracted_data || {};
 
-                const now = new Date();
-                const fallbackTime = `${now.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+                        const now = new Date();
+                        const fallbackTime = `${now.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}`;
 
-                this.weatherData = {
-                    city: city,
-                    timezone: raw.timezone || 'auto',
-                    lastUpdated: fallbackTime,
-                    current: {
-                        temp: cur.temperature_2m !== undefined ? Math.round(cur.temperature_2m) : (ext.temp !== undefined ? Math.round(ext.temp) : null),
-                        feelsLike: cur.apparent_temperature !== undefined ? Math.round(cur.apparent_temperature) : (cur.temperature_2m !== undefined ? Math.round(cur.temperature_2m) : null),
-                        humidity: cur.relative_humidity_2m !== undefined ? Math.round(cur.relative_humidity_2m) : (ext.humidity !== undefined ? Math.round(ext.humidity) : null),
-                        wind: cur.wind_speed_10m !== undefined ? Math.round(cur.wind_speed_10m) : (ext.wind !== undefined ? Math.round(ext.wind) : null),
-                        pressure: (cur.surface_pressure ?? ext.pressure) !== undefined ? Math.round(cur.surface_pressure ?? ext.pressure) : null,
-                        weatherCode: cur.weather_code !== undefined ? cur.weather_code : 0,
-                        aqi: ext.aqi !== undefined ? Math.round(ext.aqi) : null
-                    },
-                    daily: (d.time || []).slice(0, 7).map((dateStrVal, i) => ({
-                        date: dateStrVal,
-                        maxTemp: d.temperature_2m_max?.[i] !== undefined ? Math.round(d.temperature_2m_max[i]) : null,
-                        minTemp: d.temperature_2m_min?.[i] !== undefined ? Math.round(d.temperature_2m_min[i]) : null,
-                        weatherCode: d.weather_code?.[i] !== undefined ? d.weather_code[i] : 0,
-                        sunrise: d.sunrise?.[i] || ext.sunrise || '',
-                        sunset: d.sunset?.[i] || ext.sunset || ''
-                    }))
-                };
-                this.weatherLastUpdated = fallbackTime;
-                this.weatherIsCached = true;
-                this.weatherError = null;
-                return;
+                        this.weatherData = {
+                            city: city,
+                            timezone: raw.timezone || 'auto',
+                            lastUpdated: fallbackTime,
+                            current: {
+                                temp: cur.temperature_2m !== undefined ? Math.round(cur.temperature_2m) : (ext.temp !== undefined ? Math.round(ext.temp) : null),
+                                feelsLike: cur.apparent_temperature !== undefined ? Math.round(cur.apparent_temperature) : (cur.temperature_2m !== undefined ? Math.round(cur.temperature_2m) : null),
+                                humidity: cur.relative_humidity_2m !== undefined ? Math.round(cur.relative_humidity_2m) : (ext.humidity !== undefined ? Math.round(ext.humidity) : null),
+                                wind: cur.wind_speed_10m !== undefined ? Math.round(cur.wind_speed_10m) : (ext.wind !== undefined ? Math.round(ext.wind) : null),
+                                pressure: (cur.surface_pressure ?? ext.pressure) !== undefined ? Math.round(cur.surface_pressure ?? ext.pressure) : null,
+                                weatherCode: cur.weather_code !== undefined ? cur.weather_code : 0,
+                                aqi: ext.aqi !== undefined ? Math.round(ext.aqi) : null
+                            },
+                            daily: (d.time || []).slice(0, 7).map((dateStrVal, i) => ({
+                                date: dateStrVal,
+                                maxTemp: d.temperature_2m_max?.[i] !== undefined ? Math.round(d.temperature_2m_max[i]) : null,
+                                minTemp: d.temperature_2m_min?.[i] !== undefined ? Math.round(d.temperature_2m_min[i]) : null,
+                                weatherCode: d.weather_code?.[i] !== undefined ? d.weather_code[i] : 0,
+                                sunrise: d.sunrise?.[i] || ext.sunrise || '',
+                                sunset: d.sunset?.[i] || ext.sunset || ''
+                            }))
+                        };
+                        this.weatherLastUpdated = fallbackTime;
+                        this.weatherIsCached = true;
+                        this.weatherError = null;
+                        return;
+                    }
+                }
             }
         } catch (fbErr) {
             console.warn('[TVWeather] Fallback load error:', fbErr);
         }
 
-        this.weatherError = `Unable to fetch live weather forecast for ${city}. Please check internet connection.`;
+        // If file was blank or unavailable, but we have internet, fetch live API
+        if (navigator.onLine) {
+            this.loadWeatherData(true);
+            return;
+        }
+
+        this.weatherError = `No weather data available for ${city}. Please connect to internet.`;
     },
 
     async fetchCityCoordinates(city) {
