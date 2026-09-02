@@ -7,6 +7,7 @@
  * - Languages Data: languagesData.js (AVAILABLE_LANGUAGES)
  * - Menu Hierarchy: menuData.js (MENU_DATA)
  * - Applications Controller: applications.js (TVAppsController)
+ * - Screen Cast Controller: screenCast.js (TVScreenCastController)
  */
 'use strict';
 
@@ -26,6 +27,7 @@ function tvApp() {
         infoPanelHtml: '',
         languagesHtml: '',
         applicationsHtml: '',
+        screenCastHtml: '',
 
         // 100% Offline Multilingual Engine
         currentLangTranslations: {},
@@ -41,6 +43,9 @@ function tvApp() {
 
         // Applications & OTT Apps Controller Module
         ...(window.TVAppsController || {}),
+
+        // Screen Cast Controller Module
+        ...(window.TVScreenCastController || {}),
 
         // Hotel & Slideshow State
         hotelData: {},
@@ -93,7 +98,8 @@ function tvApp() {
                 this.loadComponent('menu_slider', html => this.menuSliderHtml = html),
                 this.loadComponent('info_panel', html => this.infoPanelHtml = html),
                 this.loadComponent('languages', html => this.languagesHtml = html),
-                this.loadComponent('applications', html => this.applicationsHtml = html)
+                this.loadComponent('applications', html => this.applicationsHtml = html),
+                this.loadComponent('screen_cast', html => this.screenCastHtml = html)
             ]);
 
             const config = await TVDataService.loadConfig();
@@ -339,6 +345,8 @@ function tvApp() {
                 } else if (['apps', 'applications'].includes(viewId)) {
                     this.activeAppFocusIndex = 0;
                     this.focusCurrentApp();
+                } else if (['screen_cast', 'cast'].includes(viewId)) {
+                    this.openScreenCast();
                 }
             }
         },
