@@ -513,19 +513,20 @@ function tvApp() {
                         this.activeAppFocusIndex -= cols;
                         this.focusCurrentApp();
                     } else {
-                        document.getElementById('tv-header-back-btn')?.focus();
+                        this.lastAppCardIndex = this.activeAppFocusIndex;
+                        this.activeAppFocusIndex = 'header_back';
+                        this.$nextTick(() => {
+                            document.getElementById('tv-header-back-btn')?.focus();
+                        });
                     }
-                } else if (this.activeAppFocusIndex === 'back') {
-                    this.activeAppFocusIndex = Math.max(0, total - 1);
-                    this.focusCurrentApp();
                 }
                 return true;
             }
             if (TVRemoteManager.matches(e, 'DOWN')) {
                 e.preventDefault();
-                if (document.activeElement === document.getElementById('tv-header-back-btn')) {
+                if (this.activeAppFocusIndex === 'header_back' || document.activeElement === document.getElementById('tv-header-back-btn')) {
                     document.getElementById('tv-header-back-btn')?.blur();
-                    this.activeAppFocusIndex = 0;
+                    this.activeAppFocusIndex = (typeof this.lastAppCardIndex === 'number') ? this.lastAppCardIndex : 0;
                     this.focusCurrentApp();
                     return true;
                 }
@@ -533,20 +534,17 @@ function tvApp() {
                     if (this.activeAppFocusIndex + cols < total) {
                         this.activeAppFocusIndex += cols;
                         this.focusCurrentApp();
-                    } else {
-                        this.activeAppFocusIndex = 'back';
-                        this.focusCurrentApp();
                     }
                 }
                 return true;
             }
             if (TVRemoteManager.matches(e, 'ENTER')) {
                 e.preventDefault();
-                if (typeof this.activeAppFocusIndex === 'number') {
+                if (this.activeAppFocusIndex === 'header_back' || document.activeElement === document.getElementById('tv-header-back-btn')) {
+                    this.goBack();
+                } else if (typeof this.activeAppFocusIndex === 'number') {
                     const selected = list[this.activeAppFocusIndex];
                     if (selected) this.launchApp(selected);
-                } else if (this.activeAppFocusIndex === 'back') {
-                    this.goBack();
                 } else {
                     document.activeElement?.click?.();
                 }

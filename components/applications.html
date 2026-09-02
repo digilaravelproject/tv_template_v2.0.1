@@ -51,10 +51,10 @@
 
             <template x-for="(app, idx) in getActiveOttList()" :key="app.id || idx">
                 <div @click="launchApp(app)"
-                     @mouseenter="activeAppFocusIndex = idx"
+                     @mouseenter="activeAppFocusIndex = idx; lastAppCardIndex = idx; document.getElementById('tv-header-back-btn')?.blur();"
                      tabindex="0"
                      :id="`app_card_${idx}`"
-                     @focus="activeAppFocusIndex = idx"
+                     @focus="activeAppFocusIndex = idx; lastAppCardIndex = idx; document.getElementById('tv-header-back-btn')?.blur();"
                      class="h-52 rounded-2xl flex flex-col items-center justify-between p-4 cursor-pointer transition-all duration-300 outline-none border text-center relative group select-none"
                      :class="{
                          'bg-gradient-to-b from-amber-500/25 via-[#181818] to-black border-2 border-amber-400 shadow-[0_0_35px_rgba(255,215,0,0.7),0_12px_28px_rgba(0,0,0,0.95)] scale-[1.05] z-30 ring-2 ring-amber-300': activeAppFocusIndex === idx,
@@ -112,22 +112,15 @@
 
         </div>
 
-        <!-- Bottom Action Bar with Back Button -->
+        <!-- Bottom Action Bar (Clear & Concise) -->
         <div class="flex items-center justify-between pt-3 border-t border-amber-500/25 flex-shrink-0">
             <p class="text-xs text-slate-400 font-medium tracking-wide">
                 Press <span class="text-amber-400 font-bold">BACK</span> on TV remote to return to Home screen
             </p>
-            <button @click="goBack()"
-                    id="apps-btn-back"
-                    tabindex="0"
-                    @focus="activeAppFocusIndex = 'back'"
-                    class="px-8 py-2.5 rounded-full font-black text-sm tracking-wider uppercase transition-all duration-200 cursor-pointer outline-none border flex items-center gap-2"
-                    :class="activeAppFocusIndex === 'back'
-                        ? 'bg-gradient-to-r from-amber-500 to-amber-400 border-white text-black shadow-[0_0_25px_rgba(255,215,0,0.9)] ring-2 ring-amber-300 scale-105'
-                        : 'bg-black/60 border-amber-500/60 text-amber-400 hover:bg-amber-500/20'">
-                <span>←</span>
-                <span x-text="t('back', 'BACK').toUpperCase()">BACK</span>
-            </button>
+            <div class="flex items-center gap-2 text-xs text-slate-400 font-semibold">
+                <span>Select app with</span>
+                <span class="px-2 py-0.5 rounded bg-amber-500/30 border border-amber-400 text-amber-300 font-bold text-[10px]">OK</span>
+            </div>
         </div>
 
     </div>
