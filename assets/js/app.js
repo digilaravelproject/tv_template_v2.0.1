@@ -8,6 +8,7 @@
  * - Menu Hierarchy: menuData.js (MENU_DATA)
  * - Applications Controller: applications.js (TVAppsController)
  * - Screen Cast Controller: screenCast.js (TVScreenCastController)
+ * - Weather Controller: weather.js (TVWeatherController)
  */
 'use strict';
 
@@ -28,6 +29,7 @@ function tvApp() {
         languagesHtml: '',
         applicationsHtml: '',
         screenCastHtml: '',
+        weatherHtml: '',
 
         // 100% Offline Multilingual Engine
         currentLangTranslations: {},
@@ -46,6 +48,9 @@ function tvApp() {
 
         // Screen Cast Controller Module
         ...(window.TVScreenCastController || {}),
+
+        // Weather Controller Module
+        ...(window.TVWeatherController || {}),
 
         // Hotel & Slideshow State
         hotelData: {},
@@ -99,7 +104,8 @@ function tvApp() {
                 this.loadComponent('info_panel', html => this.infoPanelHtml = html),
                 this.loadComponent('languages', html => this.languagesHtml = html),
                 this.loadComponent('applications', html => this.applicationsHtml = html),
-                this.loadComponent('screen_cast', html => this.screenCastHtml = html)
+                this.loadComponent('screen_cast', html => this.screenCastHtml = html),
+                this.loadComponent('weather', html => this.weatherHtml = html)
             ]);
 
             const config = await TVDataService.loadConfig();
@@ -347,6 +353,8 @@ function tvApp() {
                     this.focusCurrentApp();
                 } else if (['screen_cast', 'cast'].includes(viewId)) {
                     this.openScreenCast();
+                } else if (viewId === 'weather') {
+                    this.openWeather();
                 }
             }
         },
