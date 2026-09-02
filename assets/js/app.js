@@ -499,8 +499,6 @@ function tvApp() {
             const key = idKey === 'apps' ? 'applications'
                 : idKey === 'livetv' ? 'live_tv'
                 : idKey === 'ourcity' ? 'our_city'
-                : idKey === 'hotel_menu' ? 'hotel_info'
-                : idKey === 'room_info' ? 'rooms'
                 : idKey;
 
             const trKey = this.t(`icons.${key}`, '');
