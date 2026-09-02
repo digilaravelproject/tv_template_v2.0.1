@@ -27,45 +27,54 @@ window.TVWeatherController = {
     initWeatherBackgroundSync() {
         this.weatherCity = this.resolveWeatherCity();
 
-        // Listen for online/offline events
-        window.addEventListener('online', () => {
-            console.log('[TVWeather] Network online detected. Triggering background sync.');
-            this.loadWeatherData(true).then(() => {
+        // Update header immediately with resolved city from data.json so it is never blank
+        this.updateWeatherHeaderStr();
+
+        // Listen for online/offline events (attach only once)
+        if (!this._weatherListenersAttached) {
+            this._weatherListenersAttached = true;
+            window.addEventListener('online', () => {
+                console.log('[TVWeather] Network online detected. Triggering background sync.');
+                this.loadWeatherData(true).then(() => {
+                    this.updateWeatherHeaderStr();
+                }).catch(() => {});
+            });
+
+            window.addEventListener('offline', () => {
+                console.log('[TVWeather] Network offline detected. Hiding weather temperature.');
                 this.updateWeatherHeaderStr();
-            }).catch(() => {});
-        });
+            });
+        }
 
-        window.addEventListener('offline', () => {
-            console.log('[TVWeather] Network offline detected. Hiding weather.');
-            this.updateWeatherHeaderStr();
-        });
-
-        // Initial background fetch on load
-        if (navigator.onLine) {
+        // Initial background fetch on load if online
+        if (navigator.onLine && this.weatherCity) {
             this.loadWeatherData(false).then(() => {
                 this.updateWeatherHeaderStr();
             }).catch(() => {});
         } else {
-            this.weatherStr = ''; // Hidden if offline
+            this.updateWeatherHeaderStr();
         }
 
         // Setup 15-minute background auto-refresh timer
         if (this.weatherRefreshTimer) clearInterval(this.weatherRefreshTimer);
         this.weatherRefreshTimer = setInterval(() => {
-            if (navigator.onLine) {
+            if (navigator.onLine && this.weatherCity) {
                 console.log('[TVWeather] 15-minute background refresh triggered.');
                 this.loadWeatherData(true).then(() => {
                     this.updateWeatherHeaderStr();
                 }).catch(() => {});
             } else {
-                this.weatherStr = '';
+                this.updateWeatherHeaderStr();
             }
         }, this.weatherPollIntervalMs);
     },
 
     updateWeatherHeaderStr() {
+        const city = this.weatherData?.city || this.weatherCity || this.resolveWeatherCity() || this.hotelData?.hotel?.city || '';
+
+        // If offline: user requested "sirf weather hide krna hain atleast tum json me se city to display krskte ho ?"
         if (!navigator.onLine) {
-            this.weatherStr = ''; // Hide on Home Screen if offline
+            this.weatherStr = city; // Show city from data.json, hide temperature
             return;
         }
 
@@ -73,10 +82,10 @@ window.TVWeatherController = {
         if (cur && cur.temp !== null && cur.temp !== undefined) {
             const c = cur.temp;
             const f = Math.round((c * 9) / 5 + 32);
-            const city = this.weatherData.city || this.weatherCity || this.resolveWeatherCity() || '';
             this.weatherStr = `${city} ${c > 0 ? '+' : ''}${c}°C / ${f}°F`.trim();
         } else {
-            this.weatherStr = '';
+            // While online and fetching in background, show city immediately from data.json
+            this.weatherStr = city;
         }
     },
 

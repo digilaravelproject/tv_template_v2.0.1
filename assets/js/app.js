@@ -149,6 +149,9 @@ function tvApp() {
             }
             this.updateGreeting();
             this.updateWeatherStr();
+            if (typeof this.initWeatherBackgroundSync === 'function') {
+                this.initWeatherBackgroundSync();
+            }
         },
 
         // --- 100% OFFLINE TRANSLATION ENGINE ---
