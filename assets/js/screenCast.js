@@ -26,6 +26,14 @@ window.TVScreenCastController = {
     },
 
     async fetchCastDeviceInfo() {
+        // 1. Direct Room Number Priority (e.g. "Room 1111")
+        const room = this.roomNo || this.hotelData?.device?.room_no;
+        if (room) {
+            this.castDeviceName = `Room ${room}`;
+            return;
+        }
+
+        // 2. Fallback to native bridge if no room number
         try {
             if (window.flutterBridge?.identifyDevice) {
                 let info = await window.flutterBridge.identifyDevice();
@@ -38,35 +46,24 @@ window.TVScreenCastController = {
                     this.castDeviceName = name;
                     return;
                 }
-                if (data.room_no) {
-                    this.castDeviceName = `Hotel TV (Room ${data.room_no})`;
-                    return;
-                }
             }
         } catch (e) {
             console.warn('[ScreenCast] Bridge identifyDevice fallback notice:', e);
         }
 
-        // Fallback from loaded hotelData / data.json
+        // 3. Fallback to device brand & model
         const dev = this.hotelData?.device || {};
-        const hotelName = this.hotelData?.hotel?.hotel_name || 'Hotel TV';
-        const room = this.roomNo || dev.room_no;
-        if (room) {
-            this.castDeviceName = `${hotelName} (Room ${room})`;
-        } else if (dev.brand && dev.model) {
-            const modelClean = dev.model.replace(/_/g, ' ');
-            this.castDeviceName = `${dev.brand.toUpperCase()} ${modelClean}`;
+        if (dev.brand && dev.model) {
+            this.castDeviceName = `${dev.brand.toUpperCase()} ${dev.model.replace(/_/g, ' ')}`;
         } else {
-            this.castDeviceName = `${hotelName} - Smart TV`;
+            this.castDeviceName = 'Hotel TV';
         }
     },
 
     getCastDeviceName() {
+        const room = this.roomNo || this.hotelData?.device?.room_no;
+        if (room) return `Room ${room}`;
         if (this.castDeviceName) return this.castDeviceName;
-        const dev = this.hotelData?.device || {};
-        const hotelName = this.hotelData?.hotel?.hotel_name || 'Hotel TV';
-        const room = this.roomNo || dev.room_no;
-        if (room) return `${hotelName} (Room ${room})`;
-        return `${hotelName} - Smart TV`;
+        return 'Hotel TV';
     }
 };
