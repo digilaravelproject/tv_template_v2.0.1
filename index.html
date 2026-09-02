@@ -21,6 +21,7 @@
     </script>
 
     <link rel="stylesheet" href="assets/css/custom.css">
+    <script src="assets/js/bridge.js"></script>
     <script src="assets/js/remote.js"></script>
     <script src="assets/js/dataService.js"></script>
     <script src="assets/js/languagesData.js"></script>
@@ -83,8 +84,13 @@
              x-html="languagesHtml" 
              class="w-full flex-1 flex flex-col items-center justify-start"></div>
 
+        <!-- Applications / OTT Apps Screen -->
+        <div x-show="['apps', 'applications'].includes(currentView)"
+             x-html="applicationsHtml" 
+             class="w-full flex-1 flex flex-col items-center justify-start"></div>
+
         <!-- Dynamic Middle Viewport (When opening other detail screens) -->
-        <div x-show="currentView !== 'home' && !['hotel_info', 'room_info', 'amenities', 'language', 'languages'].includes(currentView)"
+        <div x-show="currentView !== 'home' && !['hotel_info', 'room_info', 'amenities', 'language', 'languages', 'apps', 'applications'].includes(currentView)"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
