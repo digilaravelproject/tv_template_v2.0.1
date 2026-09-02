@@ -4,6 +4,7 @@
  * - 100% Dynamic City: Extracted strictly from data.json (hotel.city -> hotel.hotel_location -> weather.city)
  * - Zero Hardcoded Cities, Coordinates, or Dummy Fallback Temperatures
  * - Open-Meteo Geocoding + High-Precision Forecast + Air Quality (US AQI)
+ * - Live Real-Time Manual & Auto Refresh with Real-Time "Last Updated" timestamp
  * - Dynamic LocalStorage Cache + Local Fallback Protection
  * - Full Multilingual Localization support
  */
@@ -12,6 +13,7 @@
 window.TVWeatherController = {
     weatherHtml: '',
     weatherLoading: false,
+    isRefreshing: false,
     weatherError: null,
     weatherData: null,
     weatherCity: '',
@@ -54,6 +56,20 @@ window.TVWeatherController = {
         return city || '';
     },
 
+    async refreshWeather() {
+        if (this.isRefreshing || this.weatherLoading) return;
+        this.isRefreshing = true;
+        try {
+            await this.loadWeatherData(true);
+            if (typeof this.showToast === 'function') {
+                const temp = this.weatherData?.current?.temp !== null ? `${this.weatherData.current.temp > 0 ? '+' : ''}${this.weatherData.current.temp}°C` : '';
+                this.showToast(`Live weather refreshed for ${this.weatherCity} ${temp}`.trim());
+            }
+        } finally {
+            setTimeout(() => { this.isRefreshing = false; }, 600);
+        }
+    },
+
     async loadWeatherData(force = false) {
         const city = this.resolveWeatherCity();
         this.weatherCity = city;
@@ -75,6 +91,7 @@ window.TVWeatherController = {
                 const cachedStr = localStorage.getItem(cacheKey);
                 if (cachedStr && (Date.now() - cachedTime < maxAge)) {
                     this.weatherData = JSON.parse(cachedStr);
+                    this.weatherLastUpdated = this.weatherData.lastUpdated || '';
                     this.weatherIsCached = false;
                     this.weatherLoading = false;
                     this.weatherError = null;
@@ -121,9 +138,15 @@ window.TVWeatherController = {
             const cur = forecast.current || {};
             const daily = forecast.daily || {};
 
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            const lastUpdatedStr = `${dateStr}, ${timeStr}`;
+
             const formatted = {
                 city: city,
                 timezone: coords.timezone,
+                lastUpdated: lastUpdatedStr,
                 current: {
                     temp: cur.temperature_2m !== undefined ? Math.round(cur.temperature_2m) : null,
                     feelsLike: cur.apparent_temperature !== undefined ? Math.round(cur.apparent_temperature) : (cur.temperature_2m !== undefined ? Math.round(cur.temperature_2m) : null),
@@ -133,8 +156,8 @@ window.TVWeatherController = {
                     weatherCode: cur.weather_code !== undefined ? cur.weather_code : 0,
                     aqi: aqi
                 },
-                daily: (daily.time || []).slice(0, 7).map((dateStr, i) => ({
-                    date: dateStr,
+                daily: (daily.time || []).slice(0, 7).map((dateStrVal, i) => ({
+                    date: dateStrVal,
                     maxTemp: daily.temperature_2m_max?.[i] !== undefined ? Math.round(daily.temperature_2m_max[i]) : null,
                     minTemp: daily.temperature_2m_min?.[i] !== undefined ? Math.round(daily.temperature_2m_min[i]) : null,
                     weatherCode: daily.weather_code?.[i] !== undefined ? daily.weather_code[i] : 0,
@@ -144,6 +167,7 @@ window.TVWeatherController = {
             };
 
             this.weatherData = formatted;
+            this.weatherLastUpdated = lastUpdatedStr;
             this.weatherIsCached = false;
             this.weatherLoading = false;
             this.weatherError = null;
@@ -168,6 +192,7 @@ window.TVWeatherController = {
             const cachedStr = localStorage.getItem(cacheKey);
             if (cachedStr) {
                 this.weatherData = JSON.parse(cachedStr);
+                this.weatherLastUpdated = this.weatherData.lastUpdated || '';
                 this.weatherIsCached = true;
                 this.weatherError = null;
                 return;
@@ -183,9 +208,13 @@ window.TVWeatherController = {
                 const d = raw.daily || {};
                 const ext = raw.extracted_data || {};
 
+                const now = new Date();
+                const fallbackTime = `${now.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+
                 this.weatherData = {
                     city: city,
                     timezone: raw.timezone || 'auto',
+                    lastUpdated: fallbackTime,
                     current: {
                         temp: cur.temperature_2m !== undefined ? Math.round(cur.temperature_2m) : (ext.temp !== undefined ? Math.round(ext.temp) : null),
                         feelsLike: cur.apparent_temperature !== undefined ? Math.round(cur.apparent_temperature) : (cur.temperature_2m !== undefined ? Math.round(cur.temperature_2m) : null),
@@ -195,8 +224,8 @@ window.TVWeatherController = {
                         weatherCode: cur.weather_code !== undefined ? cur.weather_code : 0,
                         aqi: ext.aqi !== undefined ? Math.round(ext.aqi) : null
                     },
-                    daily: (d.time || []).slice(0, 7).map((dateStr, i) => ({
-                        date: dateStr,
+                    daily: (d.time || []).slice(0, 7).map((dateStrVal, i) => ({
+                        date: dateStrVal,
                         maxTemp: d.temperature_2m_max?.[i] !== undefined ? Math.round(d.temperature_2m_max[i]) : null,
                         minTemp: d.temperature_2m_min?.[i] !== undefined ? Math.round(d.temperature_2m_min[i]) : null,
                         weatherCode: d.weather_code?.[i] !== undefined ? d.weather_code[i] : 0,
@@ -204,6 +233,7 @@ window.TVWeatherController = {
                         sunset: d.sunset?.[i] || ext.sunset || ''
                     }))
                 };
+                this.weatherLastUpdated = fallbackTime;
                 this.weatherIsCached = true;
                 this.weatherError = null;
                 return;
