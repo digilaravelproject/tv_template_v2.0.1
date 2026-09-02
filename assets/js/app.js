@@ -476,8 +476,9 @@ function tvApp() {
         },
 
         updateWeatherStr() {
-            const city = this.t('city_name', this.hotelData.hotel?.city || 'Mumbai');
-            this.weatherStr = `${city} 28°C / 82°F`;
+            const city = this.hotelData.weather?.city || this.hotelData.hotel?.city || this.t('city_name', 'Mumbai');
+            const temp = this.hotelData.weather?.temp_str || this.hotelData.weather?.temp || '28°C / 82°F';
+            this.weatherStr = `${city} ${temp}`.trim();
         },
 
         // --- MENU GENERATOR (SCALABLE & RECURSIVE) ---
@@ -500,7 +501,6 @@ function tvApp() {
                 : idKey === 'ourcity' ? 'our_city'
                 : idKey === 'hotel_menu' ? 'hotel_info'
                 : idKey === 'room_info' ? 'rooms'
-                : idKey === 'interactive_services' ? 'room_service'
                 : idKey;
 
             const trKey = this.t(`icons.${key}`, '');
