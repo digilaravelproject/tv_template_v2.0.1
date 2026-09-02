@@ -48,7 +48,32 @@ window.MENU_DATA = [
         name: 'Interactive Services',
         icon: 'assets/images/icons/roomservice.png',
         status: 'show',
-        sub_menus: []
+        sub_menus: [
+            {
+                id: 'flights',
+                name: 'Flights',
+                icon: 'assets/images/icons/flights.png',
+                status: 'show'
+            },
+            {
+                id: 'weather',
+                name: 'Weather',
+                icon: 'assets/images/icons/weather.png',
+                status: 'show'
+            },
+            {
+                id: 'input',
+                name: 'Input',
+                icon: 'assets/images/icons/input.png',
+                status: 'show'
+            },
+            {
+                id: 'settings',
+                name: 'Settings',
+                icon: 'assets/images/icons/settings.png',
+                status: 'show'
+            }
+        ]
     },
     {
         id: 'ourcity',
