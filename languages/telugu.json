@@ -28,7 +28,7 @@
     "departures": "ప్రస్థానం",
     "arrivals": "ఆగమనం",
     "next": "తరువాత",
-    "previous": "మునుపటి",
+    "previous": "వెనుకకు",
     "refresh": "తాజా చేయండి",
     "last_updated": "చివరి అప్‌డేట్",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "లోడ్ అవుతోంది...",
         "emergency": "అత్యవసరం",
         "fire_alert": "ఫైర్ అలర్ట్"
-    }
+    },
+    "back": "వెనుకకు"
 }

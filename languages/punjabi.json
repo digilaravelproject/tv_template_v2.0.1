@@ -28,7 +28,7 @@
     "departures": "ਰਵਾਨਗੀ",
     "arrivals": "ਆਗਮਨ",
     "next": "ਅੱਗੇ",
-    "previous": "ਪਿੱਛੇ",
+    "previous": "ਵਾਪਸ",
     "refresh": "ਹੁਣੇ ਅਪਡੇਟ ਕਰੋ",
     "last_updated": "ਆਖਰੀ ਅਪਡੇਟ",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
         "emergency": "ਐਮਰਜੈਂਸੀ",
         "fire_alert": "ਅੱਗ ਦੀ ਚੇਤਾਵਨੀ"
-    }
+    },
+    "back": "ਵਾਪਸ"
 }

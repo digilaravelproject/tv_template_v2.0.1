@@ -28,7 +28,7 @@
     "departures": "প্রস্থান",
     "arrivals": "আগমন",
     "next": "পরবর্তী",
-    "previous": "পূর্ববর্তী",
+    "previous": "ফিরে যান",
     "refresh": "এখন রিফ্রেশ করুন",
     "last_updated": "শেষ আপডেট",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "লোড হচ্ছে...",
         "emergency": "জরুরী",
         "fire_alert": "অগ্নি সতর্কতা"
-    }
+    },
+    "back": "ফিরে যান"
 }

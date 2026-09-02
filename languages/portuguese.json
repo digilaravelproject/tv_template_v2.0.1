@@ -28,7 +28,7 @@
     "departures": "Partidas",
     "arrivals": "Chegadas",
     "next": "Próximo",
-    "previous": "Anterior",
+    "previous": "Voltar",
     "refresh": "Atualizar",
     "last_updated": "Última atualização",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "Carregando...",
         "emergency": "Emergência",
         "fire_alert": "Alerta de fogo"
-    }
+    },
+    "back": "Voltar"
 }

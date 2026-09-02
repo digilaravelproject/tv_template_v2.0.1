@@ -28,7 +28,7 @@
     "departures": "புறப்பாடு",
     "arrivals": "வருகை",
     "next": "அடுத்து",
-    "previous": "முன்பு",
+    "previous": "பின்னே",
     "refresh": "இப்போது புதுப்பி",
     "last_updated": "கடைசி புதுப்பிப்பு",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "ஏற்றப்படுகிறது...",
         "emergency": "அவசரம்",
         "fire_alert": "தீ எச்சரிக்கை"
-    }
+    },
+    "back": "பின்னே"
 }

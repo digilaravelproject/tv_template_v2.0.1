@@ -28,7 +28,7 @@
     "departures": "প্রস্থান",
     "arrivals": "আগমন",
     "next": "পিছৰ",
-    "previous": "আগৰ",
+    "previous": "উভতি যাওক",
     "refresh": "আপডেট কৰক",
     "last_updated": "অন্তিম আপডেট",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "লোড হৈ আছে...",
         "emergency": "জৰুৰীকালীন",
         "fire_alert": "অগ্নি সতৰ্কবাণী"
-    }
+    },
+    "back": "উভতি যাওক"
 }

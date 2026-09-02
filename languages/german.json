@@ -117,5 +117,6 @@
         "loading": "Lädt...",
         "emergency": "Notfall",
         "fire_alert": "Feueralarm"
-    }
+    },
+    "back": "Zurück"
 }

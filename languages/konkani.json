@@ -28,7 +28,7 @@
     "departures": "प्रस्थान",
     "arrivals": "आगमन",
     "next": "फुडलें",
-    "previous": "फाटलें",
+    "previous": "फाटीं",
     "refresh": "अपडेट करा",
     "last_updated": "निमाणें अपडेट",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "लोड जाता...",
         "emergency": "आणीबाणी",
         "fire_alert": "उज्याचो धोको"
-    }
+    },
+    "back": "फाटीं"
 }

@@ -28,7 +28,7 @@
     "departures": "प्रस्थान",
     "arrivals": "आगमन",
     "next": "पुढील",
-    "previous": "मागील",
+    "previous": "मागे",
     "refresh": "आता अपडेट करा",
     "last_updated": "अंतिम अपडेट",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "लोड होत आहे...",
         "emergency": "आणीबाणी",
         "fire_alert": "आगीची चेतावणी"
-    }
+    },
+    "back": "मागे"
 }

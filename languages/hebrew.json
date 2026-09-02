@@ -28,7 +28,7 @@
     "departures": "המראות",
     "arrivals": "נחיתות",
     "next": "הבא",
-    "previous": "הקודם",
+    "previous": "חזרה",
     "refresh": "רענן",
     "last_updated": "עודכן לאחרונה",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "טוען...",
         "emergency": "חירום",
         "fire_alert": "התרעת אש"
-    }
+    },
+    "back": "חזרה"
 }

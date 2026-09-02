@@ -29,7 +29,7 @@
     "departures": "المغادرون",
     "arrivals": "القادمون",
     "next": "التالي",
-    "previous": "السابق",
+    "previous": "رجوع",
     "refresh": "تحديث الآن",
     "last_updated": "آخر تحديث",
     "greetings": {
@@ -118,5 +118,6 @@
         "loading": "جاري التحميل...",
         "emergency": "طوارئ",
         "fire_alert": "إنذار حريق"
-    }
+    },
+    "back": "رجوع"
 }

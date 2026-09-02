@@ -29,7 +29,7 @@
     "departures": "روانگی",
     "arrivals": "آمد",
     "next": "آگے",
-    "previous": "پیچھے",
+    "previous": "واپس",
     "refresh": "تازہ کریں",
     "last_updated": "آخری اپ ڈیٹ",
     "greetings": {
@@ -118,5 +118,6 @@
         "loading": "لوڈ ہو رہا ہے...",
         "emergency": "ہنگامی",
         "fire_alert": "آگ کا الرٹ"
-    }
+    },
+    "back": "واپس"
 }

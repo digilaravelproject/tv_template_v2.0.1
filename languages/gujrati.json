@@ -28,7 +28,7 @@
     "departures": "પ્રસ્થાન",
     "arrivals": "આગમન",
     "next": "આગળ",
-    "previous": "પાછળ",
+    "previous": "પાછા",
     "refresh": "અત્યારે અપડેટ કરો",
     "last_updated": "છેલ્લું અપડેટ",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "લોડ થઈ રહ્યું છે...",
         "emergency": "કટોકટી",
         "fire_alert": "ફાયર એલર્ટ"
-    }
+    },
+    "back": "પાછા"
 }

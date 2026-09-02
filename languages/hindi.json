@@ -30,7 +30,7 @@
     "departures": "प्रस्थान",
     "arrivals": "आगमन",
     "next": "अगला",
-    "previous": "पिछला",
+    "previous": "वापस",
     "refresh": "ताज़ा करें",
     "last_updated": "अंतिम अपडेट",
     "greetings": {
@@ -112,5 +112,6 @@
         "oct": "अक्टूबर",
         "nov": "नवंबर",
         "dec": "दिसंबर"
-    }
+    },
+    "back": "वापस"
 }

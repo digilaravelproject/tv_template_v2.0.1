@@ -28,7 +28,7 @@
     "departures": "Départs",
     "arrivals": "Arrivées",
     "next": "Suivant",
-    "previous": "Précédent",
+    "previous": "Retour",
     "refresh": "Actualiser",
     "last_updated": "Dernière mise à jour",
     "greetings": {
@@ -117,5 +117,6 @@
         "loading": "Chargement...",
         "emergency": "Urgence",
         "fire_alert": "Alerte incendie"
-    }
+    },
+    "back": "Retour"
 }

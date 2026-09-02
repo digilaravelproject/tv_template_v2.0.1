@@ -28,7 +28,7 @@
     "departures": "Вылет",
     "arrivals": "Прилет",
     "next": "След.",
-    "previous": "Пред.",
+    "previous": "Назад",
     "refresh": "Обновить",
     "last_updated": "Обновлено",
     "greetings": {
@@ -108,5 +108,6 @@
         "loading": "Загрузка...",
         "emergency": "Экстренная ситуация",
         "fire_alert": "Пожарная тревога"
-    }
+    },
+    "back": "Назад"
 }
