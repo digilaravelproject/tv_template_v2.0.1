@@ -17,8 +17,8 @@
         <template x-if="currentView !== 'home'">
             <button id="tv-header-back-btn"
                     @click="goBack()"
-                    @focus="if (['apps', 'applications'].includes(currentView)) { activeAppFocusIndex = 'header_back'; } else if (['language', 'languages'].includes(currentView)) { activeLangFocusIndex = 'header_back'; }"
-                    @keydown.down="if (currentView === 'weather') { $event.preventDefault(); document.getElementById('tv-weather-refresh-btn')?.focus(); }"
+                    @focus="if (['apps', 'applications'].includes(currentView)) { activeAppFocusIndex = 'header_back'; } else if (['language', 'languages'].includes(currentView)) { activeLangFocusIndex = 'header_back'; } else if (['input', 'inputs', 'hdmi'].includes(currentView)) { activeInputFocusIndex = 'header_back'; }"
+                    @keydown.down="if (currentView === 'weather') { $event.preventDefault(); document.getElementById('tv-weather-refresh-btn')?.focus(); } else if (['input', 'inputs', 'hdmi'].includes(currentView)) { $event.preventDefault(); focusCurrentInputPort(); }"
                     tabindex="0"
                     class="group flex items-center justify-center space-x-2.5 px-7 py-2.5 rounded-full bg-black border-2 border-[#caa44d] text-white hover:bg-[#ffc700] hover:border-[#ffc700] hover:text-black hover:shadow-[0_0_30px_rgba(255,199,0,0.9),0_0_12px_rgba(255,215,0,0.95)] focus:bg-[#ffc700] focus:border-[#ffc700] focus:text-black focus:shadow-[0_0_35px_rgba(255,199,0,0.95),0_0_15px_rgba(255,215,0,0.95)] focus:scale-105 transition-all duration-300 outline-none cursor-pointer">
                 <span class="text-2xl font-black transition-colors duration-200 group-hover:text-black group-focus:text-black leading-none">←</span>

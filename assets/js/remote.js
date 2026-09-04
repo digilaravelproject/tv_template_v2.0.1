@@ -55,13 +55,29 @@ const TVRemoteManager = {
     },
 
     lockCanvasGestures() {
-        window.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
-        window.addEventListener('keydown', e => {
-            if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', 'Equal', 'Minus'].includes(e.key)) e.preventDefault();
-        });
-        document.addEventListener('gesturestart', e => e.preventDefault());
-        document.addEventListener('gesturechange', e => e.preventDefault());
-        document.addEventListener('gestureend', e => e.preventDefault());
+        const block = e => {
+            if (e.ctrlKey || e.metaKey) {
+                const k = e.key;
+                const c = e.code;
+                if (
+                    k === '+' || k === '=' || k === '-' || k === '_' || k === '0' ||
+                    c === 'NumpadAdd' || c === 'NumpadSubtract' || c === 'Equal' || c === 'Minus' || c === 'Digit0'
+                ) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }
+        };
+        window.addEventListener('keydown', block, { capture: true, passive: false });
+        window.addEventListener('wheel', e => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, { capture: true, passive: false });
+        document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
+        document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
+        document.addEventListener('gestureend', e => e.preventDefault(), { passive: false });
     },
 
     navigateSpatial(direction) {

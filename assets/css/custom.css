@@ -15,6 +15,15 @@
     font-family: 'Poppins', sans-serif;
 }
 
+:root, html {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 html, body {
     width: 100vw;
     height: 100vh;
@@ -26,10 +35,14 @@ html, body {
     font-family: 'Poppins', sans-serif;
 }
 
-/* 16:9 TV Canvas Matrix Viewport */
+/* 16:9 TV Canvas Matrix Viewport - Absolute 1920x1080 Native TV Resolution */
 #tv-canvas {
-    width: 1920px;
-    height: 1080px;
+    width: 1920px !important;
+    height: 1080px !important;
+    min-width: 1920px !important;
+    min-height: 1080px !important;
+    max-width: 1920px !important;
+    max-height: 1080px !important;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -38,6 +51,7 @@ html, body {
     overflow: hidden;
     background-color: #000;
     font-family: 'Poppins', sans-serif;
+    contain: layout size paint;
 }
 
 /* Custom Scrollbars */

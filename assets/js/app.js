@@ -30,6 +30,7 @@ function tvApp() {
         applicationsHtml: '',
         screenCastHtml: '',
         weatherHtml: '',
+        inputHtml: '',
 
         // 100% Offline Multilingual Engine
         currentLangTranslations: {},
@@ -51,6 +52,9 @@ function tvApp() {
 
         // Weather Controller Module
         ...(window.TVWeatherController || {}),
+
+        // Input / HDMI Ports Controller Module
+        ...(window.TVInputController || {}),
 
         // Hotel & Slideshow State
         hotelData: {},
@@ -110,7 +114,8 @@ function tvApp() {
                 this.loadComponent('languages', html => this.languagesHtml = html),
                 this.loadComponent('applications', html => this.applicationsHtml = html),
                 this.loadComponent('screen_cast', html => this.screenCastHtml = html),
-                this.loadComponent('weather', html => this.weatherHtml = html)
+                this.loadComponent('weather', html => this.weatherHtml = html),
+                this.loadComponent('input', html => this.inputHtml = html)
             ]);
 
             const config = await TVDataService.loadConfig();
@@ -253,6 +258,26 @@ function tvApp() {
             this.currentMenuList = this.menuItems;
             this.activeMenuIndex = 0;
             this.currentMenuTitle = 'Main Menu';
+            this.preloadMenuIcons(this.menuItems);
+        },
+
+        preloadMenuIcons(items) {
+            if (!Array.isArray(items)) return;
+            items.forEach(item => {
+                const src = this.getMenuIcon(item);
+                if (src) {
+                    const img = new Image();
+                    img.src = src;
+                }
+                if (Array.isArray(item.sub_menus) && item.sub_menus.length > 0) {
+                    this.preloadMenuIcons(item.sub_menus);
+                }
+            });
+            // Preload weather & static assets to ensure zero offline failure
+            ['sunny.png', 'cloudy.png', 'rainy.png', 'rainy-day.png', 'rainy-night.png', 'storm.png'].forEach(f => {
+                const wImg = new Image();
+                wImg.src = `assets/images/weather/${f}`;
+            });
         },
 
         getMenuTitle(item) {
@@ -384,6 +409,8 @@ function tvApp() {
                     this.openScreenCast();
                 } else if (viewId === 'weather') {
                     this.openWeather();
+                } else if (['input', 'inputs', 'hdmi'].includes(viewId)) {
+                    this.openInputSources();
                 }
             }
         },
@@ -631,6 +658,10 @@ function tvApp() {
 
             if (['apps', 'applications'].includes(this.currentView)) {
                 if (this.handleApplicationsGridNavigation(e)) return;
+            }
+
+            if (['input', 'inputs', 'hdmi'].includes(this.currentView)) {
+                if (this.handleInputGridNavigation(e)) return;
             }
 
             if (TVRemoteManager.matches(e, 'LEFT')) {
