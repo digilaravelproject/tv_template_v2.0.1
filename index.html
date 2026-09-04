@@ -30,6 +30,7 @@
     <script src="assets/js/screenCast.js"></script>
     <script src="assets/js/weather.js"></script>
     <script src="assets/js/inputController.js"></script>
+    <script src="assets/js/settingsController.js"></script>
     <script src="assets/js/app.js"></script>
     <script defer src="assets/js/alpine.min.js"></script>
 
@@ -141,8 +142,13 @@
              x-html="inputHtml" 
              class="w-full flex-1 flex flex-col items-center justify-start px-12 pt-4 pb-6"></div>
 
+        <!-- Settings / Admin Screen -->
+        <div x-show="['settings', 'admin'].includes(currentView)"
+             x-html="settingsHtml" 
+             class="w-full flex-1 flex flex-col items-center justify-center px-12 pt-2 pb-4"></div>
+
         <!-- Dynamic Middle Viewport (When opening other detail screens) -->
-        <div x-show="currentView !== 'home' && !['hotel_info', 'room_info', 'amenities', 'language', 'languages', 'apps', 'applications', 'screen_cast', 'cast', 'weather', 'input', 'inputs', 'hdmi'].includes(currentView)"
+        <div x-show="currentView !== 'home' && !['hotel_info', 'room_info', 'amenities', 'language', 'languages', 'apps', 'applications', 'screen_cast', 'cast', 'weather', 'input', 'inputs', 'hdmi', 'settings', 'admin'].includes(currentView)"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"

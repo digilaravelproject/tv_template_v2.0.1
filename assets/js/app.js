@@ -31,6 +31,7 @@ function tvApp() {
         screenCastHtml: '',
         weatherHtml: '',
         inputHtml: '',
+        settingsHtml: '',
 
         // 100% Offline Multilingual Engine
         currentLangTranslations: {},
@@ -55,6 +56,9 @@ function tvApp() {
 
         // Input / HDMI Ports Controller Module
         ...(window.TVInputController || {}),
+
+        // Settings / Admin Controller Module
+        ...(window.TVSettingsController || {}),
 
         // Hotel & Slideshow State
         hotelData: {},
@@ -115,7 +119,8 @@ function tvApp() {
                 this.loadComponent('applications', html => this.applicationsHtml = html),
                 this.loadComponent('screen_cast', html => this.screenCastHtml = html),
                 this.loadComponent('weather', html => this.weatherHtml = html),
-                this.loadComponent('input', html => this.inputHtml = html)
+                this.loadComponent('input', html => this.inputHtml = html),
+                this.loadComponent('settings', html => this.settingsHtml = html)
             ]);
 
             const config = await TVDataService.loadConfig();
@@ -411,6 +416,8 @@ function tvApp() {
                     this.openWeather();
                 } else if (['input', 'inputs', 'hdmi'].includes(viewId)) {
                     this.openInputSources();
+                } else if (['settings', 'admin'].includes(viewId)) {
+                    this.openSettingsAuth();
                 }
             }
         },
@@ -448,6 +455,13 @@ function tvApp() {
 
         goBack() {
             this.stopInfoAutoSlide();
+            if (['settings', 'admin'].includes(this.currentView)) {
+                this.settingsStep = 'auth';
+                this.settingsPin = '';
+                this.maskedPin = ['•', '•', '•', '•', '•', '•'];
+                this.authStatus = 'idle';
+                this.authMessage = '';
+            }
             if (document.activeElement?.blur) document.activeElement.blur();
             if (this.currentView !== 'home') {
                 this.currentView = this.viewHistory.pop() || 'home';
@@ -462,6 +476,57 @@ function tvApp() {
                     this.currentMenuTitle = prev.title;
                     setTimeout(() => { this.isMenuFlipping = false; }, 150);
                 }, 200);
+            }
+        },
+
+        // --- HEADER NAVIGATION HANDLERS ---
+        onHeaderBackFocus() {
+            const view = this.currentView;
+            if (['apps', 'applications'].includes(view)) {
+                this.activeAppFocusIndex = 'header_back';
+            } else if (['language', 'languages'].includes(view)) {
+                this.activeLangFocusIndex = 'header_back';
+            } else if (['input', 'inputs', 'hdmi'].includes(view)) {
+                this.activeInputFocusIndex = 'header_back';
+            } else if (['settings', 'admin'].includes(view)) {
+                if (this.settingsStep === 'auth') {
+                    this.activeKeypadIndex = 'header_back';
+                } else {
+                    this.dashboardFocus = 'header_back';
+                }
+            }
+        },
+
+        onHeaderBackDown(e) {
+            if (e && typeof e.preventDefault === 'function') e.preventDefault();
+            const view = this.currentView;
+
+            if (['apps', 'applications'].includes(view)) {
+                this.activeAppFocusIndex = 0;
+                if (typeof this.focusCurrentApp === 'function') this.focusCurrentApp();
+            } else if (['language', 'languages'].includes(view)) {
+                this.activeLangFocusIndex = 0;
+                if (typeof this.focusCurrentLanguage === 'function') this.focusCurrentLanguage();
+            } else if (['input', 'inputs', 'hdmi'].includes(view)) {
+                if (typeof this.focusCurrentInputPort === 'function') this.focusCurrentInputPort();
+            } else if (['settings', 'admin'].includes(view)) {
+                if (this.settingsStep === 'auth') {
+                    this.activeKeypadIndex = 0;
+                    if (typeof this.focusCurrentKeypadBtn === 'function') this.focusCurrentKeypadBtn();
+                } else {
+                    const selIdx = (this.availableTvPorts && this.liveTvSelectedPort) ? this.availableTvPorts.indexOf(this.liveTvSelectedPort) : 0;
+                    this.dashboardFocus = 'port_' + (selIdx >= 0 ? selIdx : 0);
+                    if (typeof this.focusCurrentDashboardElement === 'function') {
+                        this.focusCurrentDashboardElement();
+                    } else {
+                        document.getElementById(`settings_port_${selIdx >= 0 ? selIdx : 0}`)?.focus();
+                    }
+                }
+            } else if (view === 'weather') {
+                document.getElementById('tv-weather-refresh-btn')?.focus();
+            } else {
+                if (document.activeElement?.blur) document.activeElement.blur();
+                TVRemoteManager.navigateSpatial('down');
             }
         },
 
@@ -644,12 +709,8 @@ function tvApp() {
                 this.lastActionTime = now;
             }
 
-            if (TVRemoteManager.matches(e, 'BACK')) { e.preventDefault(); this.goBack(); return; }
-            if (TVRemoteManager.matches(e, 'HOME')) {
-                e.preventDefault(); this.stopInfoAutoSlide();
-                if (document.activeElement?.blur) document.activeElement.blur();
-                this.currentView = 'home'; this.menuStack = []; this.currentMenuList = this.menuItems; this.activeMenuIndex = 0;
-                return;
+            if (['settings', 'admin'].includes(this.currentView)) {
+                if (this.handleSettingsKeyNavigation(e)) return;
             }
 
             if (['language', 'languages'].includes(this.currentView)) {
@@ -662,6 +723,14 @@ function tvApp() {
 
             if (['input', 'inputs', 'hdmi'].includes(this.currentView)) {
                 if (this.handleInputGridNavigation(e)) return;
+            }
+
+            if (TVRemoteManager.matches(e, 'BACK')) { e.preventDefault(); this.goBack(); return; }
+            if (TVRemoteManager.matches(e, 'HOME')) {
+                e.preventDefault(); this.stopInfoAutoSlide();
+                if (document.activeElement?.blur) document.activeElement.blur();
+                this.currentView = 'home'; this.menuStack = []; this.currentMenuList = this.menuItems; this.activeMenuIndex = 0;
+                return;
             }
 
             if (TVRemoteManager.matches(e, 'LEFT')) {
