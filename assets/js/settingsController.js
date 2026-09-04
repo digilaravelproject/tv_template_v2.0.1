@@ -188,7 +188,8 @@ window.TVSettingsController = {
                 this.authStatus = 'idle';
                 this.settingsPin = '';
                 this.maskedPin = ['•', '•', '•', '•', '•', '•'];
-                this.dashboardFocus = 'port_0';
+                const selIdx = this.availableTvPorts.indexOf(this.liveTvSelectedPort);
+                this.dashboardFocus = 'port_' + (selIdx >= 0 ? selIdx : 0);
                 this.loadHardwareDetails();
                 this.$nextTick(() => {
                     this.focusCurrentDashboardElement();
