@@ -129,6 +129,17 @@ function tvApp() {
                 await this.syncInstalledApps();
             }
 
+            if (window.flutterBridge?.isAvailable?.() && window.flutterBridge?.getSelectedLiveTvPort) {
+                try {
+                    const saved = await window.flutterBridge.getSelectedLiveTvPort();
+                    if (saved && (saved.selectedPort || saved.port)) {
+                        const nativePort = saved.selectedPort || saved.port;
+                        this.liveTvSelectedPort = nativePort;
+                        localStorage.setItem('last_tv_input_port', nativePort);
+                    }
+                } catch (_) {}
+            }
+
             this.startSlider();
             this.$nextTick(() => setTimeout(() => { this.isLoaded = true; }, 100));
         },
@@ -390,12 +401,79 @@ function tvApp() {
                 return;
             }
 
+            if (['livetv', 'live_tv'].includes(item.id)) {
+                this.launchDefaultLiveTv();
+                return;
+            }
+
             this.navigate(item.id);
+        },
+
+        async launchDefaultLiveTv() {
+            const defaultPort = localStorage.getItem('last_tv_input_port') || this.liveTvSelectedPort || 'HDMI 1';
+            console.log('[TVApp] Launching Live TV with default target:', defaultPort);
+
+            const isBridge = Boolean(window.flutterBridge?.isAvailable?.());
+
+            if (defaultPort.startsWith('APP:')) {
+                const pkg = defaultPort.replace(/^APP:/i, '').trim();
+                let appName = 'Application';
+                const found = (this.availableOttApps || []).find(a => (a.package_name || a.id) === pkg) ||
+                              (this.installedApps || []).find(a => (a.package_name || a.id) === pkg);
+                if (found && found.name) {
+                    appName = found.name;
+                }
+                this.showToast(`Launching ${appName}...`);
+
+                if (isBridge && window.flutterBridge?.launchApp) {
+                    try { await window.flutterBridge.launchApp(pkg); } catch (e) { console.warn('[TVApp] launchApp warning:', e); }
+                } else if (window.FlutterBridge?.postMessage) {
+                    window.FlutterBridge.postMessage(JSON.stringify({ method: 'launchApp', args: [pkg], id: Date.now() }));
+                } else if (window.AndroidBridge?.launchApp) {
+                    window.AndroidBridge.launchApp(pkg);
+                } else {
+                    console.log(`[TVApp] Browser preview: Launched App (${appName} - ${pkg})`);
+                }
+            } else if (defaultPort === 'IPTV') {
+                this.showToast('Launching IPTV Channels...');
+                if (isBridge && window.flutterBridge?.launchIptv) {
+                    try { await window.flutterBridge.launchIptv('iptv', 'iptv/all.json'); } catch (e) { console.warn('[TVApp] launchIptv warning:', e); }
+                } else if (isBridge && window.flutterBridge?.launchLiveTv) {
+                    try { await window.flutterBridge.launchLiveTv('IPTV'); } catch (e) { console.warn('[TVApp] launchLiveTv IPTV warning:', e); }
+                } else if (window.FlutterBridge?.postMessage) {
+                    window.FlutterBridge.postMessage(JSON.stringify({ method: 'launchIptv', args: ['iptv', 'iptv/all.json'], id: Date.now() }));
+                } else {
+                    console.log('[TVApp] Browser preview: Launched IPTV Stream');
+                }
+            } else {
+                // HDMI / Hardware Port (e.g. HDMI 1, HDMI 2, etc.)
+                this.showToast(`Switching to ${defaultPort}...`);
+                if (isBridge && window.flutterBridge?.launchHdmi) {
+                    try {
+                        await window.flutterBridge.launchHdmi(defaultPort);
+                    } catch (_) {
+                        if (window.flutterBridge?.launchLiveTv) {
+                            try { await window.flutterBridge.launchLiveTv(defaultPort); } catch (e) { console.warn('[TVApp] launchLiveTv warning:', e); }
+                        }
+                    }
+                } else if (isBridge && window.flutterBridge?.launchLiveTv) {
+                    try { await window.flutterBridge.launchLiveTv(defaultPort); } catch (e) { console.warn('[TVApp] launchLiveTv warning:', e); }
+                } else if (window.FlutterBridge?.postMessage) {
+                    window.FlutterBridge.postMessage(JSON.stringify({ method: 'launchHdmi', args: [defaultPort], id: Date.now() }));
+                } else {
+                    console.log(`[TVApp] Browser preview: Switched to ${defaultPort}`);
+                }
+            }
         },
 
         navigate(viewId) {
             if (viewId === 'weather' && !navigator.onLine) {
                 this.showToast('No Internet Connection. Please connect to internet.');
+                return;
+            }
+
+            if (['livetv', 'live_tv'].includes(viewId)) {
+                this.launchDefaultLiveTv();
                 return;
             }
 

@@ -248,12 +248,48 @@
 
         /**
          * Launch IPTV Stream with configuration
-         * @param {string} packageName - IPTV package
+         * @param {string} [packageName] - IPTV package
          * @param {string} [configPath] - Config path (e.g. "iptv/all.json")
          * @returns {Promise<Object>} { success: boolean }
          */
         launchIptv(packageName, configPath) {
-            return callNative('launchIptv', [packageName, configPath]);
+            const args = packageName ? [packageName, configPath || ''] : ['iptv', 'iptv/all.json'];
+            return callNative('launchIptv', args);
+        },
+
+        /**
+         * Launch Default Live TV based on saved user preference (HDMI / IPTV / TV App)
+         * @param {string} [fallbackPort='HDMI 1']
+         * @returns {Promise<Object>}
+         */
+        async launchDefaultLiveTv(fallbackPort = 'HDMI 1') {
+            let pref = localStorage.getItem('last_tv_input_port');
+            if (!pref && this.getSelectedLiveTvPort && isFlutterAvailable()) {
+                try {
+                    const res = await this.getSelectedLiveTvPort();
+                    pref = res?.selectedPort || res?.port;
+                } catch (_) {}
+            }
+            const target = pref || fallbackPort;
+            console.log('[Bridge] Launching Default Live TV target:', target);
+
+            if (!isFlutterAvailable()) {
+                console.log('[Bridge] Browser preview: launchDefaultLiveTv simulated for', target);
+                return Promise.resolve({ success: true, mode: 'browser_simulated', target: target });
+            }
+
+            if (target.startsWith('APP:')) {
+                const pkg = target.replace(/^APP:/i, '').trim();
+                return this.launchApp(pkg);
+            } else if (target === 'IPTV') {
+                return this.launchIptv('iptv', 'iptv/all.json');
+            } else {
+                try {
+                    return await this.launchHdmi(target);
+                } catch (e) {
+                    return await this.launchLiveTv(target);
+                }
+            }
         },
 
         /**
