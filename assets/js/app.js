@@ -32,6 +32,7 @@ function tvApp() {
         weatherHtml: '',
         inputHtml: '',
         settingsHtml: '',
+        flightsHtml: '',
 
         // 100% Offline Multilingual Engine
         currentLangTranslations: {},
@@ -59,6 +60,9 @@ function tvApp() {
 
         // Settings / Admin Controller Module
         ...(window.TVSettingsController || {}),
+
+        // Flights Controller Module
+        ...(window.TVFlightsController || {}),
 
         // Hotel & Slideshow State
         hotelData: {},
@@ -120,7 +124,8 @@ function tvApp() {
                 this.loadComponent('screen_cast', html => this.screenCastHtml = html),
                 this.loadComponent('weather', html => this.weatherHtml = html),
                 this.loadComponent('input', html => this.inputHtml = html),
-                this.loadComponent('settings', html => this.settingsHtml = html)
+                this.loadComponent('settings', html => this.settingsHtml = html),
+                this.loadComponent('flights', html => this.flightsHtml = html)
             ]);
 
             const config = await TVDataService.loadConfig();
@@ -499,6 +504,8 @@ function tvApp() {
                     this.openInputSources();
                 } else if (['settings', 'admin'].includes(viewId)) {
                     this.openSettingsAuth();
+                } else if (['flights', 'flight'].includes(viewId)) {
+                    this.openFlights();
                 }
             }
         },
@@ -804,6 +811,10 @@ function tvApp() {
 
             if (['input', 'inputs', 'hdmi'].includes(this.currentView)) {
                 if (this.handleInputGridNavigation(e)) return;
+            }
+
+            if (['flights', 'flight'].includes(this.currentView)) {
+                if (typeof this.handleFlightKeyNavigation === 'function' && this.handleFlightKeyNavigation(e)) return;
             }
 
             if (TVRemoteManager.matches(e, 'BACK')) { e.preventDefault(); this.goBack(); return; }

@@ -1,0 +1,196 @@
+<!-- Airport FIDS (Flight Information Display System) Screen -->
+<div class="w-full flex-1 flex flex-col justify-start px-12 pt-3 pb-6 max-h-[860px] select-none">
+
+    <!-- Top Airport Header & Controller Bar -->
+    <div class="flex items-center justify-between bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-8 py-3.5 mb-4 shadow-2xl">
+        <!-- Airport Title & Code -->
+        <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-400 text-black flex items-center justify-center font-black text-xl shadow-[0_0_20px_rgba(251,191,36,0.5)]">
+                <i class="fa-solid fa-plane-departure text-lg"></i>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2.5">
+                    <span class="text-xl font-extrabold text-white tracking-wide" x-text="currentAirportName"></span>
+                    <span class="font-mono font-black text-xs px-2.5 py-0.5 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/40" x-text="currentAirportIata"></span>
+                </div>
+                <p class="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
+                    <span>Live FIDS Terminal Schedule</span>
+                    <span>&bull;</span>
+                    <span>City: <strong class="text-slate-200" x-text="currentAirportCity"></strong></span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Airport Switcher & Live Refresh Trigger -->
+        <div class="flex items-center space-x-3">
+            <!-- Secondary Airport Chip Switcher if available -->
+            <template x-if="secondaryAirportData">
+                <div class="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 space-x-1">
+                    <button id="flight-focus-toggle_primary"
+                            @click="switchAirportSlot('primary')"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                            :class="activeAirportSlot === 'primary' ? 'bg-amber-400 text-black shadow-md' : 'text-slate-300 hover:text-white'">
+                        <span x-text="primaryAirportData?.iata_code || 'Primary'"></span>
+                    </button>
+                    <button id="flight-focus-toggle_secondary"
+                            @click="switchAirportSlot('secondary')"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                            :class="activeAirportSlot === 'secondary' ? 'bg-amber-400 text-black shadow-md' : 'text-slate-300 hover:text-white'">
+                        <span x-text="secondaryAirportData?.iata_code || 'Secondary'"></span>
+                    </button>
+                </div>
+            </template>
+
+            <!-- Last Updated Timestamp Badge -->
+            <div class="text-right px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-2xs font-mono text-slate-300">
+                <span class="text-slate-400 block text-3xs uppercase tracking-wider font-sans font-bold">Last Synced</span>
+                <span class="text-amber-300 font-bold" x-text="flightLastUpdated || 'Just Now'"></span>
+            </div>
+
+            <!-- Manual Refresh Action Button -->
+            <button id="flight-focus-btn_refresh"
+                    @click="refreshFlights()"
+                    class="px-4 py-2 rounded-xl bg-white/10 hover:bg-amber-400 hover:text-black border border-white/20 text-white text-xs font-extrabold flex items-center space-x-2 transition-all cursor-pointer"
+                    :class="{ 'ring-2 ring-amber-400 bg-amber-400 text-black': flightFocusTarget === 'btn_refresh', 'opacity-50 pointer-events-none': isFlightRefreshing }">
+                <i class="fa-solid fa-arrows-rotate text-sm" :class="{ 'fa-spin text-black': isFlightRefreshing }"></i>
+                <span x-text="isFlightRefreshing ? 'SYNCING...' : 'REFRESH'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Departures / Arrivals Flight Board Container -->
+    <div class="flex-1 bg-slate-950/80 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+        
+        <!-- Tab Selector Bar -->
+        <div class="flex items-center justify-between border-b border-white/10 px-8 pt-4 pb-3 bg-white/[0.02]">
+            <div class="flex items-center space-x-4">
+                <!-- Departures Tab -->
+                <button id="flight-focus-tab_departures"
+                        @click="switchFlightTab('departures')"
+                        class="px-6 py-2.5 rounded-2xl text-sm font-black tracking-wider uppercase transition-all flex items-center space-x-2.5 cursor-pointer"
+                        :class="activeFlightTab === 'departures' ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-[0_0_25px_rgba(251,191,36,0.4)]' : 'bg-white/5 text-slate-300 hover:text-white border border-white/10'">
+                    <i class="fa-solid fa-plane-departure text-base"></i>
+                    <span>DEPARTURES (UDAAN)</span>
+                </button>
+
+                <!-- Arrivals Tab -->
+                <button id="flight-focus-tab_arrivals"
+                        @click="switchFlightTab('arrivals')"
+                        class="px-6 py-2.5 rounded-2xl text-sm font-black tracking-wider uppercase transition-all flex items-center space-x-2.5 cursor-pointer"
+                        :class="activeFlightTab === 'arrivals' ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-[0_0_25px_rgba(251,191,36,0.4)]' : 'bg-white/5 text-slate-300 hover:text-white border border-white/10'">
+                    <i class="fa-solid fa-plane-arrival text-base"></i>
+                    <span>ARRIVALS (AAGMAN)</span>
+                </button>
+            </div>
+
+            <div class="flex items-center space-x-3 text-xs font-bold text-slate-400">
+                <span class="inline-flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
+                    Live Radar Feed
+                </span>
+                <span>&bull;</span>
+                <span x-text="`${(activeFlightTab === 'departures' ? flightDepartures : flightArrivals).length} Flights Scheduled`"></span>
+            </div>
+        </div>
+
+        <!-- Table Column Headers -->
+        <div class="grid grid-cols-12 gap-4 px-8 py-3 bg-black/40 border-b border-white/10 text-xs uppercase font-black text-amber-400 tracking-wider">
+            <div class="col-span-2">Flight / Airline</div>
+            <div class="col-span-4" x-text="activeFlightTab === 'departures' ? 'Destination' : 'Origin City'"></div>
+            <div class="col-span-2 text-center">Scheduled / Est.</div>
+            <div class="col-span-1 text-center">Terminal</div>
+            <div class="col-span-1 text-center" x-text="activeFlightTab === 'departures' ? 'Gate' : 'Belt'"></div>
+            <div class="col-span-2 text-right">Status</div>
+        </div>
+
+        <!-- Loading State -->
+        <div x-show="isFlightLoading" class="flex-1 flex flex-col items-center justify-center py-16 space-y-3">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-amber-400"></i>
+            <p class="text-sm font-bold text-slate-300">Synchronizing Live Flight Information...</p>
+        </div>
+
+        <!-- Flight Rows (Scrollable Container) -->
+        <div id="tv-flights-table-body" 
+             x-show="!isFlightLoading" 
+             class="flex-1 overflow-y-auto divide-y divide-white/5 px-8 py-2 scroll-smooth"
+             style="max-height: 520px;">
+            
+            <template x-for="(flight, idx) in (activeFlightTab === 'departures' ? flightDepartures : flightArrivals)" :key="flight.flight_no + '_' + idx">
+                <div class="grid grid-cols-12 gap-4 py-3.5 items-center hover:bg-white/[0.04] transition-colors rounded-xl px-2">
+                    <!-- Flight No & Airline -->
+                    <div class="col-span-2 flex items-center space-x-3">
+                        <span class="font-mono font-black text-base text-amber-400 tracking-wider" x-text="flight.flight_no"></span>
+                        <span class="text-xs text-slate-300 font-semibold truncate" x-text="flight.airline"></span>
+                    </div>
+
+                    <!-- Destination or Origin City -->
+                    <div class="col-span-4 flex items-center space-x-2">
+                        <i class="fa-solid fa-location-dot text-slate-500 text-xs"></i>
+                        <span class="text-sm font-bold text-white tracking-wide truncate" x-text="activeFlightTab === 'departures' ? flight.destination : flight.origin"></span>
+                    </div>
+
+                    <!-- Scheduled / Estimated Time -->
+                    <div class="col-span-2 text-center font-mono font-bold text-sm">
+                        <span class="text-white" x-text="flight.scheduled_time"></span>
+                        <template x-if="flight.estimated_time && flight.estimated_time !== flight.scheduled_time">
+                            <span class="text-amber-400 text-xs ml-1" x-text="`(${flight.estimated_time})`"></span>
+                        </template>
+                    </div>
+
+                    <!-- Terminal -->
+                    <div class="col-span-1 text-center font-mono font-black text-sm text-slate-200">
+                        <span class="px-2 py-0.5 rounded bg-white/10 border border-white/10" x-text="flight.terminal || 'T2'"></span>
+                    </div>
+
+                    <!-- Gate or Baggage Belt -->
+                    <div class="col-span-1 text-center font-mono font-black text-sm text-amber-300">
+                        <span x-text="activeFlightTab === 'departures' ? (flight.gate || '-') : (flight.belt || '-')"></span>
+                    </div>
+
+                    <!-- Live Flight Status Badge -->
+                    <div class="col-span-2 text-right">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider"
+                              :class="{
+                                  'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30': ['On Time', 'Landed'].includes(flight.status),
+                                  'bg-amber-500/20 text-amber-400 border border-amber-500/30': ['Boarding', 'Delayed'].includes(flight.status),
+                                  'bg-rose-500/20 text-rose-400 border border-rose-500/30': ['Cancelled'].includes(flight.status),
+                                  'bg-sky-500/20 text-sky-400 border border-sky-500/30': ['Departed'].includes(flight.status)
+                              }"
+                              x-text="flight.status">
+                        </span>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Empty State -->
+            <template x-if="(activeFlightTab === 'departures' ? flightDepartures : flightArrivals).length === 0">
+                <div class="text-center py-16 text-slate-400 space-y-2">
+                    <i class="fa-solid fa-plane-slash text-4xl text-slate-600"></i>
+                    <p class="text-sm font-bold">No flight schedules currently available for this airport.</p>
+                </div>
+            </template>
+        </div>
+
+        <!-- Bottom Remote Navigation Guide Bar -->
+        <div class="px-8 py-3 bg-black/60 border-t border-white/10 flex items-center justify-between text-2xs font-bold text-slate-400 uppercase tracking-wider">
+            <div class="flex items-center space-x-6">
+                <span class="flex items-center space-x-1.5">
+                    <span class="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">◄ ►</span>
+                    <span>Switch Tabs / Airport</span>
+                </span>
+                <span class="flex items-center space-x-1.5">
+                    <span class="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">▲ ▼</span>
+                    <span>Scroll Flights</span>
+                </span>
+                <span class="flex items-center space-x-1.5">
+                    <span class="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">OK</span>
+                    <span>Select / Refresh</span>
+                </span>
+            </div>
+
+            <button @click="goBack()" class="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-extrabold cursor-pointer">
+                &larr; BACK
+            </button>
+        </div>
+    </div>
+</div>

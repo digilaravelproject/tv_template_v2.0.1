@@ -416,6 +416,24 @@
             return callNative('getSystemInfo', []);
         },
 
+        /**
+         * Get live flight schedule data for an airport (or hotel's primary/secondary)
+         * @param {string} [airportCode] - Optional 3-letter IATA code (e.g. "BOM")
+         * @returns {Promise<Object>} { success: boolean, data: Object }
+         */
+        getFlightData(airportCode) {
+            return callNative('getFlightData', airportCode ? [airportCode] : []);
+        },
+
+        /**
+         * Force refresh flight data from server/upstream API
+         * @param {string} [airportCode] - Optional 3-letter IATA code
+         * @returns {Promise<Object>}
+         */
+        refreshFlightData(airportCode) {
+            return callNative('refreshFlightData', airportCode ? [airportCode] : []);
+        },
+
         // --------------------------------------------------------------------
         // 4. PUBLIC WRAPPER & FALLBACK QUERIES (Hybrid Offline / Online)
         // --------------------------------------------------------------------

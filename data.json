@@ -209,7 +209,7 @@
       {
         "sr_no": 1,
         "title": "Hotel Facility #1",
-        "description": "Experience the beauty of Taj Garden, a peaceful place with lush greenery and a relaxing atmosphere. Experience the beauty of Taj Garden, a peaceful place with lush greenery and a relaxing atmosphere. Experience the beauty of Taj Garden, a peaceful pl ",
+        "description": "Experience the beauty of Taj Garden, a peaceful place with lush greenery and a relaxing atmosphere. Experience the beauty of Taj Garden, a peaceful place with lush greenery and a relaxing atmosphere. Experience the beauty of Taj Garden, a peaceful pl",
         "features": [
           "fan 1",
           "fan 2",
@@ -340,6 +340,14 @@
         ],
         "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/room_infos\/amenity_1786626222_TgqFasce.webp"
       }
-    ]
+    ],
+    "airports": {
+      "primary": {
+        "name": "Chhatrapati Shivaji Maharaj International Airport",
+        "iata_code": "BOM",
+        "city": "Mumbai"
+      },
+      "secondary": null
+    }
   }
 }
