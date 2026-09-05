@@ -582,6 +582,8 @@ function tvApp() {
                 } else {
                     this.dashboardFocus = 'header_back';
                 }
+            } else if (['flights', 'flight'].includes(view)) {
+                this.flightFocusZone = 'header_back';
             }
         },
 
@@ -612,6 +614,10 @@ function tvApp() {
                 }
             } else if (view === 'weather') {
                 document.getElementById('tv-weather-refresh-btn')?.focus();
+            } else if (['flights', 'flight'].includes(view)) {
+                document.getElementById('tv-header-back-btn')?.blur();
+                this.flightFocusZone = 'header';
+                this.flightFocusIndex = this.secondaryAirportData ? 2 : 0;
             } else {
                 if (document.activeElement?.blur) document.activeElement.blur();
                 TVRemoteManager.navigateSpatial('down');
