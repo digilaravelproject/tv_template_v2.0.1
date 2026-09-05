@@ -109,6 +109,9 @@ function tvApp() {
             if (typeof this.initWeatherBackgroundSync === 'function') {
                 this.initWeatherBackgroundSync();
             }
+            if (typeof this.initFlightsBackgroundSync === 'function') {
+                this.initFlightsBackgroundSync();
+            }
             setInterval(() => {
                 this.updateClock();
                 this.updateGreeting();
@@ -180,6 +183,9 @@ function tvApp() {
             this.updateWeatherStr();
             if (typeof this.initWeatherBackgroundSync === 'function') {
                 this.initWeatherBackgroundSync();
+            }
+            if (typeof this.initFlightsBackgroundSync === 'function') {
+                this.initFlightsBackgroundSync();
             }
         },
 
@@ -401,7 +407,7 @@ function tvApp() {
                 return;
             }
 
-            if (item.id === 'weather' && !navigator.onLine) {
+            if (['weather', 'flights', 'flight'].includes(item.id) && !navigator.onLine) {
                 this.showToast('No Internet Connection. Please connect to internet.');
                 return;
             }
@@ -472,7 +478,7 @@ function tvApp() {
         },
 
         navigate(viewId) {
-            if (viewId === 'weather' && !navigator.onLine) {
+            if (['weather', 'flights', 'flight'].includes(viewId) && !navigator.onLine) {
                 this.showToast('No Internet Connection. Please connect to internet.');
                 return;
             }

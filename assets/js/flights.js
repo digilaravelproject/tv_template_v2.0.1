@@ -45,19 +45,89 @@ window.TVFlightsController = {
     flightFocusZone: 'tabs', // 'header' | 'tabs' | 'rows' | 'pagination'
     flightFocusIndex: 0,     // Sub-index inside current focus zone
 
+    // Background Sync & Network Monitoring
+    flightRefreshTimer: null,
+    flightPollIntervalMs: 15 * 60 * 1000, // 15 Minutes background sync
+    _flightListenersAttached: false,
+
     // =========================================================================
     // 2. INITIALIZATION & AIRPORT RESOLUTION
     // =========================================================================
 
     /**
+     * Silent Background Sync Engine.
+     * Pre-fetches flight schedule silently on home screen load so the Flight page opens instantly with 0 loading delay.
+     * Also sets up 15-minute periodic auto-refresh and online/offline event listeners.
+     */
+    initFlightsBackgroundSync() {
+        this.resolveConfiguredAirports();
+
+        // 1. Check & populate reactive state immediately from localStorage cache
+        const iata = this.currentAirportIata || 'BOM';
+        const cacheKey = `flights_cache_${iata}`;
+        try {
+            const cachedStr = localStorage.getItem(cacheKey);
+            if (cachedStr) {
+                const parsed = JSON.parse(cachedStr);
+                if (parsed && parsed.is_live === true && parsed.departures?.length > 0) {
+                    this.flightDepartures = parsed.departures || [];
+                    this.flightArrivals = parsed.arrivals || [];
+                    this.flightLastUpdated = parsed.last_updated || '';
+                }
+            }
+        } catch (_) {}
+
+        // 2. Attach online / offline network event listeners (attach only once)
+        if (!this._flightListenersAttached) {
+            this._flightListenersAttached = true;
+            window.addEventListener('online', () => {
+                console.log('[TVFlights] Network online detected. Triggering silent background sync.');
+                this.loadFlightData(true, true).catch(() => {});
+            });
+
+            window.addEventListener('offline', () => {
+                console.log('[TVFlights] Network offline detected.');
+            });
+        }
+
+        // 3. Initial silent background fetch on home screen load if online
+        if (navigator.onLine) {
+            console.log('[TVFlights] Initial silent background fetch on home screen load.');
+            this.loadFlightData(false, true).catch(() => {});
+        }
+
+        // 4. Setup 15-minute background auto-refresh timer
+        if (this.flightRefreshTimer) clearInterval(this.flightRefreshTimer);
+        this.flightRefreshTimer = setInterval(() => {
+            if (navigator.onLine) {
+                console.log('[TVFlights] 15-minute background refresh triggered.');
+                this.loadFlightData(true, true).catch(() => {});
+            }
+        }, this.flightPollIntervalMs);
+    },
+
+    /**
      * Entry point when user navigates to Flights screen.
      */
     async openFlights() {
+        if (!navigator.onLine) {
+            if (typeof this.showToast === 'function') {
+                this.showToast('No Internet Connection. Please connect to internet.');
+            }
+            return;
+        }
+
         this.resolveConfiguredAirports();
         this.flightPage = 1;
         this.flightFocusZone = 'tabs';
         this.flightFocusIndex = this.activeFlightTab === 'departures' ? 0 : 1;
-        await this.loadFlightData(false);
+
+        // If data is already in memory from silent background sync, render instantly with zero delay!
+        if (this.flightDepartures.length > 0 || this.flightArrivals.length > 0) {
+            this.isFlightLoading = false;
+        } else {
+            await this.loadFlightData(false, false);
+        }
     },
 
     /**
@@ -189,24 +259,39 @@ window.TVFlightsController = {
     // =========================================================================
 
     /**
-     * Load flight schedule with Dual-Fetch (Bridge -> API -> Local Mock).
+     * Load flight schedule with Dual-Fetch (Bridge -> Live Backend API).
+     * Strictly requires internet - no fake mock data.
      * @param {boolean} [force=false]
+     * @param {boolean} [silent=false]
      */
-    async loadFlightData(force = false) {
+    async loadFlightData(force = false, silent = false) {
+        if (!navigator.onLine) {
+            if (!silent && typeof this.showToast === 'function') {
+                this.showToast('No Internet Connection. Please connect to internet.');
+            }
+            this.flightError = 'No Internet Connection. Please connect to internet.';
+            this.isFlightLoading = false;
+            return;
+        }
+
         const iata = this.currentAirportIata || 'BOM';
         const cacheKey = `flights_cache_${iata}`;
         const timeKey = `flights_time_${iata}`;
-        const maxAge = 30 * 60 * 1000; // 30 minutes TTL
+        const maxAge = 15 * 60 * 1000; // 15 minutes TTL
 
-        // 1. Check valid localStorage cache if not forced
+        // 1. Check valid in-memory or localStorage cache if not forced
         if (!force) {
+            if (this.flightDepartures.length > 0 && this.flightArrivals.length > 0) {
+                this.isFlightLoading = false;
+                this.flightError = null;
+                return;
+            }
             try {
                 const cachedTime = parseInt(localStorage.getItem(timeKey) || '0', 10);
                 const cachedStr = localStorage.getItem(cacheKey);
                 if (cachedStr && (Date.now() - cachedTime < maxAge)) {
                     const parsed = JSON.parse(cachedStr);
-                    // Only use cache if it is live and already enriched with city names (e.g. Abu Dhabi (AUH))
-                    if (parsed && parsed.is_live === true && parsed.departures?.[0]?.destination?.includes('(')) {
+                    if (parsed && parsed.is_live === true && parsed.departures?.length > 0) {
                         this.flightDepartures = parsed.departures || [];
                         this.flightArrivals = parsed.arrivals || [];
                         this.flightLastUpdated = parsed.last_updated || '';
@@ -218,8 +303,11 @@ window.TVFlightsController = {
             } catch (_) {}
         }
 
-        this.isFlightLoading = true;
-        this.flightError = null;
+        // Silent mode: background pre-fetch on home screen load without triggering UI spinner
+        if (!silent) {
+            this.isFlightLoading = true;
+            this.flightError = null;
+        }
 
         let result = null;
 
@@ -237,11 +325,7 @@ window.TVFlightsController = {
             result = await this.fetchFlightsFromBackend(iata, force);
         }
 
-        // Channel C: Resilient Dynamic Schedule Generator (Offline / Staging)
-        if (!result || !result.data) {
-            result = { data: this.generateOfflineFlightMock(iata) };
-        }
-
+        // Real API data only - no fake offline mock flights
         if (result && result.data) {
             this.applyFlightPayload(result.data);
             try {
@@ -255,8 +339,11 @@ window.TVFlightsController = {
                 localStorage.setItem(cacheKey, JSON.stringify(enrichedCache));
                 localStorage.setItem(timeKey, Date.now().toString());
             } catch (_) {}
+            this.flightError = null;
         } else {
-            this.flightError = 'Flight schedule is currently updating. Please refresh in a moment.';
+            if (!silent) {
+                this.flightError = 'Flight schedule is currently updating. Please refresh in a moment.';
+            }
         }
 
         this.isFlightLoading = false;
@@ -488,6 +575,13 @@ window.TVFlightsController = {
      * Manual live refresh action with visual feedback.
      */
     async refreshFlights() {
+        if (!navigator.onLine) {
+            if (typeof this.showToast === 'function') {
+                this.showToast('No Internet Connection. Please connect to internet.');
+            }
+            return;
+        }
+
         if (this.isFlightRefreshing || this.isFlightLoading) return;
         this.isFlightRefreshing = true;
 
@@ -496,9 +590,9 @@ window.TVFlightsController = {
         }
 
         try {
-            await this.loadFlightData(true);
+            await this.loadFlightData(true, false);
             this.flightPage = 1;
-            if (typeof this.showToast === 'function') {
+            if (typeof this.showToast === 'function' && !this.flightError) {
                 this.showToast(`Flight board updated for ${this.currentAirportIata} ✓`);
             }
         } finally {
@@ -713,77 +807,4 @@ window.TVFlightsController = {
         return false;
     },
 
-    // =========================================================================
-    // 8. OFFLINE REALISTIC SCHEDULE GENERATOR
-    // =========================================================================
-
-    /**
-     * Offline High-Fidelity Schedule Generator.
-     * Generates 14 realistic flights (2 full pages of 7 rows) relative to current time.
-     * @param {string} iata
-     * @returns {Object}
-     */
-    generateOfflineFlightMock(iata) {
-        const now = new Date();
-        const pad = (n) => String(n).padStart(2, '0');
-        const makeTime = (offsetMins) => {
-            const d = new Date(now.getTime() + offsetMins * 60000);
-            return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        };
-
-        const airlines = [
-            { name: 'IndiGo', code: '6E', routes: ['Delhi (DEL)', 'Bangalore (BLR)', 'Goa (GOI)', 'Dubai (DXB)', 'Hyderabad (HYD)'] },
-            { name: 'Air India', code: 'AI', routes: ['London (LHR)', 'Dubai (DXB)', 'Delhi (DEL)', 'Chennai (MAA)', 'New York (JFK)'] },
-            { name: 'Vistara', code: 'UK', routes: ['Singapore (SIN)', 'Hyderabad (HYD)', 'Bangalore (BLR)', 'Kolkata (CCU)'] },
-            { name: 'Akasa Air', code: 'QP', routes: ['Ahmedabad (AMD)', 'Pune (PNQ)', 'Lucknow (LKO)', 'Goa (GOX)'] },
-            { name: 'SpiceJet', code: 'SG', routes: ['Dubai (DXB)', 'Patna (PAT)', 'Bagdogra (IXB)', 'Jaipur (JAI)'] },
-            { name: 'Emirates', code: 'EK', routes: ['Dubai (DXB)', 'London (LHR)'] },
-            { name: 'Singapore Airlines', code: 'SQ', routes: ['Singapore (SIN)'] },
-            { name: 'Qatar Airways', code: 'QR', routes: ['Doha (DOH)'] }
-        ];
-
-        const statuses = ['On Time', 'On Time', 'Boarding', 'On Time', 'Delayed', 'On Time', 'Departed'];
-        const departures = [];
-        const arrivals = [];
-
-        // Generate exactly 14 items = exactly 2 pages of 7 items
-        for (let i = 0; i < 14; i++) {
-            const al = airlines[i % airlines.length];
-            const route = al.routes[i % al.routes.length];
-            departures.push({
-                flight_no: `${al.code} ${Math.floor(100 + ((i * 37) % 890))}`,
-                airline: al.name,
-                destination: route,
-                scheduled_time: makeTime(15 + i * 18),
-                estimated_time: makeTime(15 + i * 18 + (i === 4 ? 25 : 0)),
-                terminal: i % 3 === 0 ? 'T1' : 'T2',
-                gate: String(12 + (i * 2)),
-                status: statuses[i % statuses.length],
-            });
-
-            const arrAl = airlines[(i + 2) % airlines.length];
-            const arrRoute = arrAl.routes[(i + 1) % arrAl.routes.length];
-            arrivals.push({
-                flight_no: `${arrAl.code} ${Math.floor(100 + ((i * 43) % 890))}`,
-                airline: arrAl.name,
-                origin: arrRoute,
-                scheduled_time: makeTime(10 + i * 16),
-                estimated_time: makeTime(10 + i * 16),
-                terminal: i % 3 === 0 ? 'T1' : 'T2',
-                belt: `B${(i % 6) + 1}`,
-                status: i < 2 ? 'Landed' : (i === 3 ? 'Delayed' : 'On Time'),
-            });
-        }
-
-        return {
-            current_airport: {
-                name: this.currentAirportName || 'International Airport',
-                iata_code: iata,
-                city: this.currentAirportCity || 'City'
-            },
-            last_updated: `${pad(now.getHours())}:${pad(now.getMinutes())}`,
-            departures: departures,
-            arrivals: arrivals
-        };
-    }
 };
