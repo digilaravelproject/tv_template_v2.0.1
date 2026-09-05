@@ -167,7 +167,7 @@ window.TVWeatherController = {
         this.weatherCity = city;
 
         if (!city) {
-            this.weatherError = 'Hotel city or location is not configured in data.json.';
+            this.weatherError = 'Location information is currently unavailable.';
             this.weatherLoading = false;
             return;
         }

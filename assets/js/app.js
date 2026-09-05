@@ -125,6 +125,9 @@ function tvApp() {
 
             const config = await TVDataService.loadConfig();
             if (config) this.applyHotelConfig(config);
+            if (typeof this.syncInstalledApps === 'function') {
+                await this.syncInstalledApps();
+            }
 
             this.startSlider();
             this.$nextTick(() => setTimeout(() => { this.isLoaded = true; }, 100));
@@ -435,7 +438,7 @@ function tvApp() {
         async applyLanguage() {
             localStorage.setItem('selectedLangFile', this.selectedLangFile);
             await this.loadLanguage(this.selectedLangFile);
-            if (window.flutterBridge?.setLanguage) window.flutterBridge.setLanguage(this.selectedLangFile).catch(() => {});
+            if (window.flutterBridge?.setLanguage) window.flutterBridge.setLanguage(this.selectedLangFile).catch(() => { });
             if (window.AndroidBridge?.setLanguage) window.AndroidBridge.setLanguage(this.selectedLangFile);
             this.goBack();
         },

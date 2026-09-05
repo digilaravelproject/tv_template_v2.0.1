@@ -18,8 +18,56 @@ window.TVAppsController = {
 
     getActiveOttList() {
         if (Array.isArray(this.activeOttList) && this.activeOttList.length > 0) return this.activeOttList;
+        const inst = window.tvAppInstance;
+        if (inst && Array.isArray(inst.activeOttList) && inst.activeOttList.length > 0) return inst.activeOttList;
+        if (inst && Array.isArray(inst.hotelData?.active_ott) && inst.hotelData.active_ott.length > 0) return inst.hotelData.active_ott;
         if (Array.isArray(this.hotelData?.active_ott) && this.hotelData.active_ott.length > 0) return this.hotelData.active_ott;
         return [];
+    },
+
+    async syncInstalledApps() {
+        // Only filter against real TV hardware when running inside Flutter TV app
+        if (!window.flutterBridge?.isAvailable?.()) {
+            return;
+        }
+
+        try {
+            if (typeof window.flutterBridge.getInstalledApps === 'function') {
+                const installed = await window.flutterBridge.getInstalledApps();
+                if (Array.isArray(installed) && installed.length > 0) {
+                    const installedPkgSet = new Set();
+                    installed.forEach(item => {
+                        if (typeof item === 'string') {
+                            installedPkgSet.add(item.toLowerCase().trim());
+                        } else if (item && typeof item === 'object') {
+                            const pkg = item.package_name || item.packageName || item.package || item.id;
+                            if (pkg) installedPkgSet.add(String(pkg).toLowerCase().trim());
+                        }
+                    });
+
+                    const inst = window.tvAppInstance || this;
+                    const baseList = Array.isArray(inst.hotelData?.active_ott) && inst.hotelData.active_ott.length > 0
+                        ? inst.hotelData.active_ott
+                        : (Array.isArray(this.activeOttList) ? this.activeOttList : []);
+
+                    // Intersection: App MUST be configured in data.json AND installed on the TV
+                    const filtered = baseList.filter(app => {
+                        const appPkg = (app.package_name || app.id || '').toLowerCase().trim();
+                        return installedPkgSet.has(appPkg);
+                    });
+
+                    if (filtered.length > 0) {
+                        this.activeOttList = filtered;
+                        if (window.tvAppInstance) {
+                            window.tvAppInstance.activeOttList = filtered;
+                        }
+                        console.log(`[TVApps] Synced with TV: ${filtered.length} of ${baseList.length} configured apps are installed`);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[TVApps] Error querying installed apps from bridge:', e);
+        }
     },
 
     getAppIcon(app) {

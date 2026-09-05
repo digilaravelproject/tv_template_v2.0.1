@@ -11,6 +11,13 @@
     <script>
         tailwind.config = {
             theme: {
+                screens: {
+                    'sm': '480px',
+                    'md': '640px',
+                    'lg': '800px',
+                    'xl': '1024px',
+                    '2xl': '1280px',
+                },
                 extend: {
                     fontFamily: {
                         sans: ['Poppins', 'sans-serif'],
@@ -192,5 +199,18 @@
 
     </div>
 
+    <!-- Prevent browser zoom via keyboard or mouse wheel -->
+    <script>
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && (event.key === '=' || event.key === '-' || event.key === '+' || event.key === '0')) {
+                event.preventDefault();
+            }
+        });
+        document.addEventListener('wheel', function(event) {
+            if (event.ctrlKey) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+    </script>
 </body>
 </html>
