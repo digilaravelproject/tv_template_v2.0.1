@@ -341,6 +341,18 @@
         "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/room_infos\/amenity_1786626222_TgqFasce.webp"
       }
     ],
+    "our_city": [
+      {
+        "sr_no": 1,
+        "title": "Marine Drive",
+        "description": "abcd",
+        "attractions": [
+          "abcde",
+          "qwo"
+        ],
+        "image_url": "https:\/\/tvapp.digiemperor.com\/uploads\/our_city\/city_place_1789025752_cLHmVVGn.webp"
+      }
+    ],
     "airports": {
       "primary": {
         "name": "Chhatrapati Shivaji Maharaj International Airport",

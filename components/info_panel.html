@@ -1,8 +1,8 @@
 <!-- ============================================================
      HOTEL LUXURY TV TEMPLATE v2.0.1 - DYNAMIC INFO PANEL
-     Dynamically renders hotel_info, room_info, and amenities
+     Dynamically renders hotel_info, room_info, amenities, and our_city
      ============================================================ -->
-<div x-show="['hotel_info', 'room_info', 'amenities'].includes(currentView)"
+<div x-show="['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(currentView)"
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0 scale-95"
      x-transition:enter-end="opacity-100 scale-100"
@@ -42,8 +42,8 @@
                                  @error="$el.style.display='none'">
                         </template>
                         <div x-show="!img" class="flex flex-col items-center justify-center p-8 text-center space-y-3">
-                            <div class="w-20 h-20 rounded-full bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center text-3xl text-amber-400 font-bold">
-                                🏨
+                            <div class="w-20 h-20 rounded-full bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center text-3xl text-amber-400 font-bold"
+                                 x-text="['our_city', 'ourcity'].includes(currentView) ? '🏙️' : '🏨'">
                             </div>
                             <span class="text-amber-400 font-bold text-2xl" x-text="getCurrentInfoItem().title || ''"></span>
                         </div>
@@ -80,10 +80,10 @@
             <!-- Header with Counter Badge (No Overlap, Clean Single Line) -->
             <div class="flex items-center justify-between border-b-2 border-amber-500/30 pb-4 flex-shrink-0 gap-4">
                 <span class="text-2xl font-black tracking-wider text-amber-400 uppercase whitespace-nowrap drop-shadow-sm"
-                      x-text="currentView === 'hotel_info' ? t('icons.hotel_info', 'ABOUT HOTEL') : currentView === 'room_info' ? t('icons.rooms', 'FEATURE DETAILS') : t('icons.amenities', 'DESCRIPTION')"></span>
+                      x-text="['our_city', 'ourcity'].includes(currentView) ? t('icons.our_city', 'CITY GUIDE') : currentView === 'hotel_info' ? t('icons.hotel_info', 'ABOUT HOTEL') : currentView === 'room_info' ? t('icons.rooms', 'FEATURE DETAILS') : t('icons.amenities', 'DESCRIPTION')"></span>
                 
                 <span class="text-base font-black text-amber-300 bg-amber-500/20 px-4 py-1.5 rounded-full border border-amber-500/40 tracking-wider shadow-sm whitespace-nowrap min-w-[75px] text-center flex-shrink-0"
-                      x-text="`${infoSlideIndex + 1} / ${getInfoImages().length}`"></span>
+                      x-text="`${infoSlideIndex + 1} / ${getInfoImages().length || 1}`"></span>
             </div>
 
             <!-- Location if Hotel Info -->
@@ -122,6 +122,21 @@
                             <template x-for="(spec, sIdx) in getCurrentInfoItem().specifications" :key="sIdx">
                                 <span class="px-5 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-lg font-bold uppercase tracking-wider shadow-md hover:bg-amber-500/30 transition"
                                       x-text="spec"></span>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Dynamic Attractions Pill Tags for Our City (from data.json) -->
+                <template x-if="['our_city', 'ourcity'].includes(currentView) && getCurrentInfoItem().attractions && getCurrentInfoItem().attractions.length > 0">
+                    <div class="pt-5 border-t border-amber-500/20">
+                        <div class="text-xl font-black uppercase tracking-wider text-amber-400 mb-3.5 flex items-center gap-2">
+                            <span>📍 Attractions &amp; Highlights</span>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <template x-for="(attr, aIdx) in getCurrentInfoItem().attractions" :key="aIdx">
+                                <span class="px-5 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-lg font-bold uppercase tracking-wider shadow-md hover:bg-amber-500/30 transition"
+                                      x-text="attr"></span>
                             </template>
                         </div>
                     </div>

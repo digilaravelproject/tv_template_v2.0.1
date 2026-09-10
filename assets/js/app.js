@@ -340,7 +340,10 @@ function tvApp() {
             if (!item) return '';
             if (item.icon && (item.icon.startsWith('http') || item.icon.startsWith('assets/') || item.icon.includes('/'))) return item.icon;
             if (item.icon) return `assets/images/icons/${item.icon}.png`;
-            if (item.id) return `assets/images/icons/${item.id}.png`;
+            if (item.id) {
+                const iconName = item.id === 'our_city' ? 'ourcity' : item.id;
+                return `assets/images/icons/${iconName}.png`;
+            }
             return '';
         },
 
@@ -488,14 +491,16 @@ function tvApp() {
                 return;
             }
 
-            if (this.currentView !== viewId) {
+            const targetView = (viewId === 'ourcity') ? 'our_city' : viewId;
+
+            if (this.currentView !== targetView) {
                 this.viewHistory.push(this.currentView);
-                this.currentView = viewId;
-                if (['hotel_info', 'room_info', 'amenities'].includes(viewId)) {
+                this.currentView = targetView;
+                if (['hotel_info', 'room_info', 'amenities', 'our_city'].includes(targetView)) {
                     this.infoSlideIndex = 0;
                     this.resetInfoScroll();
                     this.startInfoAutoSlide();
-                } else if (['language', 'languages'].includes(viewId)) {
+                } else if (['language', 'languages'].includes(targetView)) {
                     const foundIdx = this.availableLanguages.findIndex(l => l.file === this.selectedLangFile);
                     this.activeLangFocusIndex = foundIdx >= 0 ? foundIdx : 0;
                     this.focusCurrentLanguage();
@@ -624,6 +629,9 @@ function tvApp() {
                 document.getElementById('tv-header-back-btn')?.blur();
                 this.flightFocusZone = 'header';
                 this.flightFocusIndex = this.secondaryAirportData ? 2 : 0;
+            } else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(view)) {
+                document.getElementById('tv-header-back-btn')?.blur();
+                this.scrollInfoPanel(150);
             } else {
                 if (document.activeElement?.blur) document.activeElement.blur();
                 TVRemoteManager.navigateSpatial('down');
@@ -635,6 +643,7 @@ function tvApp() {
             if (this.currentView === 'hotel_info') return this.t('icons.hotel_info', 'HOTEL INFORMATION').toUpperCase();
             if (this.currentView === 'room_info') return this.t('icons.room_info', 'ROOM INFORMATION').toUpperCase();
             if (this.currentView === 'amenities') return this.t('icons.amenities', 'AMENITIES').toUpperCase();
+            if (['our_city', 'ourcity'].includes(this.currentView)) return this.t('icons.our_city', 'OUR CITY').toUpperCase();
             return this.t('hotel_info', 'INFORMATION').toUpperCase();
         },
 
@@ -669,6 +678,15 @@ function tvApp() {
                 const list = Array.isArray(this.hotelData.amenities) ? this.hotelData.amenities : [];
                 return list.map(item => ({ title: item.title || '', description: item.description || '', image: item.image_url || item.url || item.image || '' }));
             }
+            if (['our_city', 'ourcity'].includes(this.currentView)) {
+                const list = Array.isArray(this.hotelData.our_city) ? this.hotelData.our_city : [];
+                return list.map(item => ({
+                    title: item.title || item.name || '',
+                    description: item.description || '',
+                    image: item.image_url || item.url || item.image || '',
+                    attractions: Array.isArray(item.attractions) ? item.attractions : (Array.isArray(item.features) ? item.features : [])
+                }));
+            }
             return [];
         },
 
@@ -678,7 +696,7 @@ function tvApp() {
 
         getCurrentInfoItem() {
             const list = this.getInfoList();
-            if (!list || list.length === 0) return { title: '', description: '', features: [], specifications: [] };
+            if (!list || list.length === 0) return { title: '', description: '', features: [], specifications: [], attractions: [] };
             return list[Math.min(this.infoSlideIndex, list.length - 1)] || list[0];
         },
 
@@ -840,14 +858,14 @@ function tvApp() {
             if (TVRemoteManager.matches(e, 'LEFT')) {
                 e.preventDefault();
                 if (this.currentView === 'home') this.slideMenu(-1);
-                else if (['hotel_info', 'room_info', 'amenities'].includes(this.currentView)) this.changeInfoSlide(-1);
+                else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) this.changeInfoSlide(-1);
                 else TVRemoteManager.navigateSpatial('left');
                 return;
             }
             if (TVRemoteManager.matches(e, 'RIGHT')) {
                 e.preventDefault();
                 if (this.currentView === 'home') this.slideMenu(1);
-                else if (['hotel_info', 'room_info', 'amenities'].includes(this.currentView)) this.changeInfoSlide(1);
+                else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) this.changeInfoSlide(1);
                 else TVRemoteManager.navigateSpatial('right');
                 return;
             }
@@ -856,7 +874,7 @@ function tvApp() {
                 if (this.currentView === 'home') {
                     const cur = this.currentMenuList[this.activeMenuIndex];
                     if (cur) this.selectMenuItem(cur);
-                } else if (['hotel_info', 'room_info', 'amenities'].includes(this.currentView)) {
+                } else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) {
                     const el = document.getElementById('info-description-scroll');
                     const backBtn = document.getElementById('tv-header-back-btn');
                     if (el && el.scrollTop > 20) this.scrollInfoPanel(-150);
@@ -870,7 +888,7 @@ function tvApp() {
                 e.preventDefault();
                 if (this.currentView === 'home') {
                     if (this.menuStack.length > 0) this.goBack();
-                } else if (['hotel_info', 'room_info', 'amenities'].includes(this.currentView)) {
+                } else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) {
                     const backBtn = document.getElementById('tv-header-back-btn');
                     if (document.activeElement === backBtn) backBtn.blur();
                     this.scrollInfoPanel(150);
