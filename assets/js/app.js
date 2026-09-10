@@ -164,6 +164,9 @@ function tvApp() {
         // --- CONFIG & BRANDING ---
         applyHotelConfig(config) {
             this.hotelData = config;
+            if (Array.isArray(config.menus) && config.menus.length > 0) {
+                this.initMenuData(config.menus);
+            }
             if (config.device?.room_no) this.roomNo = config.device.room_no;
             if (config.hotel?.media?.logo_image) this.hotelLogo = config.hotel.media.logo_image;
             if (Array.isArray(config.active_ott) && config.active_ott.length > 0) {
@@ -282,12 +285,35 @@ function tvApp() {
         },
 
         // --- MENU CONTROLLER ---
-        initMenuData() {
-            const raw = Array.isArray(window.MENU_DATA) ? window.MENU_DATA : [];
+        initMenuData(sourceMenus = null) {
+            let raw = sourceMenus;
+            if (!raw && Array.isArray(this.hotelData?.menus) && this.hotelData.menus.length > 0) {
+                raw = this.hotelData.menus;
+            }
+            if (!raw) {
+                try {
+                    const cached = localStorage.getItem('cachedHotelData');
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        if (Array.isArray(parsed?.menus) && parsed.menus.length > 0) {
+                            raw = parsed.menus;
+                        }
+                    }
+                } catch (_) {}
+            }
+            if (!raw && Array.isArray(window.MENU_DATA)) {
+                raw = window.MENU_DATA;
+            }
+            raw = Array.isArray(raw) ? raw : [];
+
             this.menuItems = this.filterActiveMenus(raw);
-            this.currentMenuList = this.menuItems;
-            this.activeMenuIndex = 0;
-            this.currentMenuTitle = 'Main Menu';
+            if (this.menuStack.length === 0) {
+                this.currentMenuList = this.menuItems;
+                this.currentMenuTitle = 'Main Menu';
+            }
+            if (this.activeMenuIndex >= this.currentMenuList.length) {
+                this.activeMenuIndex = Math.max(0, this.currentMenuList.length - 1);
+            }
             this.preloadMenuIcons(this.menuItems);
         },
 
@@ -327,7 +353,11 @@ function tvApp() {
 
         filterActiveMenus(items) {
             if (!Array.isArray(items)) return [];
-            return items.filter(item => item && item.status !== 'hide').map(item => {
+            return items.filter(item => {
+                if (!item) return false;
+                const s = String(item.status ?? 'show').trim().toLowerCase();
+                return s !== 'hide' && s !== 'false' && s !== '0' && item.status !== false;
+            }).map(item => {
                 const cloned = { ...item };
                 if (Array.isArray(cloned.sub_menus) && cloned.sub_menus.length > 0) {
                     cloned.sub_menus = this.filterActiveMenus(cloned.sub_menus);
@@ -338,11 +368,40 @@ function tvApp() {
 
         getMenuIcon(item) {
             if (!item) return '';
-            if (item.icon && (item.icon.startsWith('http') || item.icon.startsWith('assets/') || item.icon.includes('/'))) return item.icon;
-            if (item.icon) return `assets/images/icons/${item.icon}.png`;
+            let icon = (item.icon || '').replace(/\\/g, '/').trim();
+            if (icon) {
+                if (icon.startsWith('http') || icon.startsWith('assets/') || icon.includes('/')) return icon;
+                return `assets/images/icons/${icon.replace(/\.png$/i, '')}.png`;
+            }
             if (item.id) {
-                const iconName = item.id === 'our_city' ? 'ourcity' : item.id;
-                return `assets/images/icons/${iconName}.png`;
+                const idKey = (item.id || '').toLowerCase().replace(/[\s-]+/g, '_');
+                const map = {
+                    hotel_menu: 'hotelinfo',
+                    hotel_info: 'hotelinfo',
+                    room_info: 'amenities',
+                    amenities: 'roomservice',
+                    interactive_services: 'roomservice',
+                    apps: 'apps',
+                    applications: 'apps',
+                    language: 'languages',
+                    languages: 'languages',
+                    livetv: 'livetv',
+                    live_tv: 'livetv',
+                    flights: 'flights',
+                    flight: 'flights',
+                    weather: 'weather',
+                    input: 'input',
+                    inputs: 'input',
+                    hdmi: 'input',
+                    settings: 'settings',
+                    admin: 'settings',
+                    ourcity: 'ourcity',
+                    our_city: 'ourcity',
+                    screen_cast: 'cast',
+                    cast: 'cast'
+                };
+                const iconFile = map[idKey] || idKey;
+                return `assets/images/icons/${iconFile}.png`;
             }
             return '';
         },
