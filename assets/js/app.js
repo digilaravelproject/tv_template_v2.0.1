@@ -167,8 +167,10 @@ function tvApp() {
         if (Array.isArray(config.active_ott) && config.active_ott.length > 0) {
           this.activeOttList = config.active_ott;
         }
-        if (Array.isArray((_e = (_d = config.hotel) == null ? void 0 : _d.media) == null ? void 0 : _e.slider_images) && config.hotel.media.slider_images.length > 0) {
-          this.sliderImages = config.hotel.media.slider_images;
+        const hotelMedia = ((_d = config.hotel) == null ? void 0 : _d.media) || {};
+        if (Array.isArray(hotelMedia.slider_images) && hotelMedia.slider_images.length > 0) {
+          this.sliderImages = hotelMedia.slider_images;
+          this.activeSlideIndex = 0;
           this.sliderImages.forEach((src) => {
             try {
               if (src) {
@@ -179,6 +181,10 @@ function tvApp() {
             } catch (_) {
             }
           });
+          this.startSlider();
+        } else if (hotelMedia.cover_image) {
+          this.sliderImages = [hotelMedia.cover_image];
+          this.activeSlideIndex = 0;
         }
         this.updateGreeting();
         this.updateWeatherStr();

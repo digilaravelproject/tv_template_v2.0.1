@@ -83,7 +83,7 @@
         <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
             <template x-for="(img, index) in sliderImages" :key="index">
                 <div class="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out"
-                     :style="'background-image: url(' + (img ? "'" + img + "'" : "''") + ');'"
+                     :style="{ backgroundImage: 'url(' + img + ')' }"
                      :class="activeSlideIndex === index ? 'opacity-100 scale-100' : 'opacity-0 scale-105'"
                      style="will-change: opacity, transform;">
                 </div>
