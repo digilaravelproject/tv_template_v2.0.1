@@ -275,7 +275,7 @@
                                 <span
                                     class="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold uppercase flex items-center gap-1">
                                     <span>✔</span>
-                                    <span x-text="liveTvSelectedPort"></span>
+                                    <span x-text="getSelectedPortDisplayLabel()"></span>
                                 </span>
                             </div>
 
@@ -291,10 +291,10 @@
                                             class="flex-1 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all duration-200 outline-none border flex items-center justify-center gap-2 cursor-pointer"
                                             :class="dashboardFocus === 'input_hdmi' 
                                                 ? 'ring-4 ring-amber-400 scale-105 bg-amber-400 text-black border-amber-300 shadow-[0_0_20px_rgba(255,215,0,0.8)] z-10' 
-                                                : (liveTvSelectedPort.toUpperCase().startsWith('HDMI') 
+                                                : (isHdmiSelected() 
                                                     ? 'bg-amber-500/20 text-amber-300 border-amber-400/80 shadow-[0_0_15px_rgba(255,215,0,0.25)]' 
                                                     : 'bg-white/10 text-slate-200 border-white/20 hover:bg-white/15')">
-                                        <span x-show="liveTvSelectedPort.toUpperCase().startsWith('HDMI')" class="text-amber-300 text-xs">✔</span>
+                                        <span x-show="isHdmiSelected()" class="text-amber-300 text-xs">✔</span>
                                         <span>HDMI</span>
                                     </button>
                                     <button id="settings_input_iptv"
@@ -305,10 +305,10 @@
                                             class="flex-1 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all duration-200 outline-none border flex items-center justify-center gap-2 cursor-pointer"
                                             :class="dashboardFocus === 'input_iptv' 
                                                 ? 'ring-4 ring-amber-400 scale-105 bg-amber-400 text-black border-amber-300 shadow-[0_0_20px_rgba(255,215,0,0.8)] z-10' 
-                                                : (liveTvSelectedPort === 'IPTV' 
+                                                : (isIptvSelected() 
                                                     ? 'bg-amber-500/20 text-amber-300 border-amber-400/80 shadow-[0_0_15px_rgba(255,215,0,0.25)]' 
                                                     : 'bg-white/10 text-slate-200 border-white/20 hover:bg-white/15')">
-                                        <span x-show="liveTvSelectedPort === 'IPTV'" class="text-amber-300 text-xs">✔</span>
+                                        <span x-show="isIptvSelected()" class="text-amber-300 text-xs">✔</span>
                                         <span>IPTV</span>
                                     </button>
                                     <button id="settings_input_apps"
@@ -319,10 +319,10 @@
                                             class="flex-1 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all duration-200 outline-none border flex items-center justify-center gap-2 cursor-pointer"
                                             :class="dashboardFocus === 'input_apps' 
                                                 ? 'ring-4 ring-amber-400 scale-105 bg-amber-400 text-black border-amber-300 shadow-[0_0_20px_rgba(255,215,0,0.8)] z-10' 
-                                                : (liveTvSelectedPort.startsWith('APP:') 
+                                                : (isAppSelected() 
                                                     ? 'bg-amber-500/20 text-amber-300 border-amber-400/80 shadow-[0_0_15px_rgba(255,215,0,0.25)]' 
                                                     : 'bg-white/10 text-slate-200 border-white/20 hover:bg-white/15')">
-                                        <span x-show="liveTvSelectedPort.startsWith('APP:')" class="text-amber-300 text-xs">✔</span>
+                                        <span x-show="isAppSelected()" class="text-amber-300 text-xs">✔</span>
                                         <span>TV App</span>
                                     </button>
                                 </div>
@@ -341,14 +341,14 @@
                                     
                                     <!-- HDMI List -->
                                     <div x-show="inputSelectionState === 'hdmi'" class="flex flex-1 gap-2 flex-wrap h-full">
-                                        <template x-for="(port, pIdx) in availableTvPorts" :key="port">
+                                        <template x-for="(port, pIdx) in (hwData.availableTvPorts || availableTvPorts)" :key="port">
                                             <button :id="`settings_hdmi_${pIdx}`"
                                                     type="button" tabindex="0"
                                                     @click="selectHdmi(port)"
                                                     @mouseenter="dashboardFocus = `hdmi_${pIdx}`"
                                                     @focus="dashboardFocus = `hdmi_${pIdx}`"
                                                     class="flex-1 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all outline-none border flex items-center justify-center"
-                                                    :class="dashboardFocus === `hdmi_${pIdx}` ? 'ring-2 ring-amber-400 bg-amber-400 text-black border-amber-300 shadow-[0_0_15px_rgba(255,215,0,0.8)] scale-105' : (liveTvSelectedPort === port ? 'bg-amber-400/20 text-amber-300 border-amber-400/50' : 'bg-white/10 text-slate-200 border-white/20')">
+                                                    :class="dashboardFocus === `hdmi_${pIdx}` ? 'ring-2 ring-amber-400 bg-amber-400 text-black border-amber-300 shadow-[0_0_15px_rgba(255,215,0,0.8)] scale-105' : (isPortSelected(port) ? 'bg-amber-400/20 text-amber-300 border-amber-400/50' : 'bg-white/10 text-slate-200 border-white/20')">
                                                 <span x-text="port"></span>
                                             </button>
                                         </template>
@@ -365,7 +365,7 @@
                                                     class="px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all outline-none border flex items-center justify-center min-w-[70px]"
                                                     :class="[
                                                         TVAppsController.getAppBoxClass(app, dashboardFocus === `app_${aIdx}`),
-                                                        liveTvSelectedPort === `APP:${app.package_name || app.id || app.name}` ? 'bg-amber-400/20 text-amber-300 !border-amber-400 ring-1 ring-amber-400' : ''
+                                                        isSpecificAppSelected(app) ? 'bg-amber-400/20 text-amber-300 !border-amber-400 ring-1 ring-amber-400' : ''
                                                     ]">
                                                 <span x-text="app.name" class="truncate max-w-[70px]"></span>
                                             </button>

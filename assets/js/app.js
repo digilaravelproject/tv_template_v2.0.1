@@ -95,61 +95,102 @@ function tvApp() {
 
         // --- LIFECYCLE INITIALIZER ---
         async init() {
-            window.tvAppInstance = this;
+            try {
+                window.tvAppInstance = this;
 
-            await this.loadLanguage(this.selectedLangFile);
-            this.initMenuData();
+                try {
+                    await this.loadLanguage(this.selectedLangFile);
+                } catch (langErr) {
+                    console.warn('[TVApp] Error during initial loadLanguage:', langErr);
+                }
 
-            TVRemoteManager.lockCanvasGestures();
-            TVRemoteManager.registerTizenPlatformKeys();
+                try {
+                    this.initMenuData();
+                } catch (menuErr) {
+                    console.warn('[TVApp] Error during initMenuData:', menuErr);
+                }
 
-            this.updateClock();
-            this.updateGreeting();
-            this.updateWeatherStr();
-            if (typeof this.initWeatherBackgroundSync === 'function') {
-                this.initWeatherBackgroundSync();
-            }
-            if (typeof this.initFlightsBackgroundSync === 'function') {
-                this.initFlightsBackgroundSync();
-            }
-            setInterval(() => {
+                try {
+                    TVRemoteManager.lockCanvasGestures();
+                    TVRemoteManager.registerTizenPlatformKeys();
+                } catch (remoteErr) {
+                    console.warn('[TVApp] Error registering remote manager keys:', remoteErr);
+                }
+
                 this.updateClock();
                 this.updateGreeting();
-            }, 1000);
+                this.updateWeatherStr();
 
-            await Promise.all([
-                this.loadComponent('header', html => this.headerHtml = html),
-                this.loadComponent('greeting', html => this.greetingHtml = html),
-                this.loadComponent('menu_slider', html => this.menuSliderHtml = html),
-                this.loadComponent('info_panel', html => this.infoPanelHtml = html),
-                this.loadComponent('languages', html => this.languagesHtml = html),
-                this.loadComponent('applications', html => this.applicationsHtml = html),
-                this.loadComponent('screen_cast', html => this.screenCastHtml = html),
-                this.loadComponent('weather', html => this.weatherHtml = html),
-                this.loadComponent('input', html => this.inputHtml = html),
-                this.loadComponent('settings', html => this.settingsHtml = html),
-                this.loadComponent('flights', html => this.flightsHtml = html)
-            ]);
-
-            const config = await TVDataService.loadConfig();
-            if (config) this.applyHotelConfig(config);
-            if (typeof this.syncInstalledApps === 'function') {
-                await this.syncInstalledApps();
-            }
-
-            if (window.flutterBridge?.isAvailable?.() && window.flutterBridge?.getSelectedLiveTvPort) {
                 try {
-                    const saved = await window.flutterBridge.getSelectedLiveTvPort();
-                    if (saved && (saved.selectedPort || saved.port)) {
-                        const nativePort = saved.selectedPort || saved.port;
-                        this.liveTvSelectedPort = nativePort;
-                        localStorage.setItem('last_tv_input_port', nativePort);
+                    if (typeof this.initWeatherBackgroundSync === 'function') {
+                        this.initWeatherBackgroundSync();
                     }
-                } catch (_) {}
-            }
+                } catch (wErr) {
+                    console.warn('[TVApp] initWeatherBackgroundSync error:', wErr);
+                }
 
-            this.startSlider();
-            this.$nextTick(() => setTimeout(() => { this.isLoaded = true; }, 100));
+                try {
+                    if (typeof this.initFlightsBackgroundSync === 'function') {
+                        this.initFlightsBackgroundSync();
+                    }
+                } catch (fErr) {
+                    console.warn('[TVApp] initFlightsBackgroundSync error:', fErr);
+                }
+
+                setInterval(() => {
+                    try {
+                        this.updateClock();
+                        this.updateGreeting();
+                    } catch (_) {}
+                }, 1000);
+
+                await Promise.all([
+                    this.loadComponent('header', html => this.headerHtml = html),
+                    this.loadComponent('greeting', html => this.greetingHtml = html),
+                    this.loadComponent('menu_slider', html => this.menuSliderHtml = html),
+                    this.loadComponent('info_panel', html => this.infoPanelHtml = html),
+                    this.loadComponent('languages', html => this.languagesHtml = html),
+                    this.loadComponent('applications', html => this.applicationsHtml = html),
+                    this.loadComponent('screen_cast', html => this.screenCastHtml = html),
+                    this.loadComponent('weather', html => this.weatherHtml = html),
+                    this.loadComponent('input', html => this.inputHtml = html),
+                    this.loadComponent('settings', html => this.settingsHtml = html),
+                    this.loadComponent('flights', html => this.flightsHtml = html)
+                ]);
+
+                try {
+                    const config = await TVDataService.loadConfig();
+                    if (config) this.applyHotelConfig(config);
+                } catch (cfgErr) {
+                    console.warn('[TVApp] Failed loading hotel configuration:', cfgErr);
+                }
+
+                try {
+                    if (typeof this.syncInstalledApps === 'function') {
+                        await this.syncInstalledApps();
+                    }
+                } catch (syncErr) {
+                    console.warn('[TVApp] Failed syncing installed apps:', syncErr);
+                }
+
+                if (window.flutterBridge?.isAvailable?.() && window.flutterBridge?.getSelectedLiveTvPort) {
+                    try {
+                        const saved = await window.flutterBridge.getSelectedLiveTvPort();
+                        if (saved && (saved.selectedPort || saved.port)) {
+                            const nativePort = saved.selectedPort || saved.port;
+                            this.liveTvSelectedPort = nativePort;
+                            localStorage.setItem('last_tv_input_port', nativePort);
+                        }
+                    } catch (_) {}
+                }
+
+                this.startSlider();
+            } catch (err) {
+                console.error('[TVApp] Fatal error in init():', err);
+            } finally {
+                const nextTick = (typeof this.$nextTick === 'function') ? this.$nextTick.bind(this) : (fn) => setTimeout(fn, 0);
+                nextTick(() => setTimeout(() => { this.isLoaded = true; }, 100));
+            }
         },
 
         async loadComponent(name, setter) {
@@ -163,834 +204,1029 @@ function tvApp() {
 
         // --- CONFIG & BRANDING ---
         applyHotelConfig(config) {
-            this.hotelData = config;
-            if (Array.isArray(config.menus) && config.menus.length > 0) {
-                this.initMenuData(config.menus);
-            }
-            if (config.device?.room_no) this.roomNo = config.device.room_no;
-            if (config.hotel?.media?.logo_image) this.hotelLogo = config.hotel.media.logo_image;
-            if (Array.isArray(config.active_ott) && config.active_ott.length > 0) {
-                this.activeOttList = config.active_ott;
-            }
-            if (Array.isArray(config.hotel?.media?.slider_images) && config.hotel.media.slider_images.length > 0) {
-                this.sliderImages = config.hotel.media.slider_images;
-                this.sliderImages.forEach(src => {
-                    if (src) {
-                        const img = new Image();
-                        img.decoding = 'async';
-                        img.src = src;
-                    }
-                });
-            }
-            this.updateGreeting();
-            this.updateWeatherStr();
-            if (typeof this.initWeatherBackgroundSync === 'function') {
-                this.initWeatherBackgroundSync();
-            }
-            if (typeof this.initFlightsBackgroundSync === 'function') {
-                this.initFlightsBackgroundSync();
+            try {
+                if (!config || typeof config !== 'object') return;
+                this.hotelData = config;
+                if (Array.isArray(config.menus) && config.menus.length > 0) {
+                    this.initMenuData(config.menus);
+                }
+                if (config.device?.room_no) this.roomNo = config.device.room_no;
+                if (config.hotel?.media?.logo_image) this.hotelLogo = config.hotel.media.logo_image;
+                if (Array.isArray(config.active_ott) && config.active_ott.length > 0) {
+                    this.activeOttList = config.active_ott;
+                }
+                if (Array.isArray(config.hotel?.media?.slider_images) && config.hotel.media.slider_images.length > 0) {
+                    this.sliderImages = config.hotel.media.slider_images;
+                    this.sliderImages.forEach(src => {
+                        try {
+                            if (src) {
+                                const img = new Image();
+                                img.decoding = 'async';
+                                img.src = src;
+                            }
+                        } catch (_) {}
+                    });
+                }
+                this.updateGreeting();
+                this.updateWeatherStr();
+                if (typeof this.initWeatherBackgroundSync === 'function') {
+                    this.initWeatherBackgroundSync();
+                }
+                if (typeof this.initFlightsBackgroundSync === 'function') {
+                    this.initFlightsBackgroundSync();
+                }
+            } catch (e) {
+                console.warn('[TVApp] applyHotelConfig error:', e);
             }
         },
 
         // --- 100% OFFLINE TRANSLATION ENGINE ---
         t(key, fallback = '') {
-            if (!key || !this.currentLangTranslations) return fallback || key;
-            let curr = this.currentLangTranslations;
-            for (const p of key.split('.')) {
-                if (curr && typeof curr === 'object' && p in curr) curr = curr[p];
-                else return fallback || key;
+            try {
+                if (!key || !this.currentLangTranslations) return fallback || key;
+                let curr = this.currentLangTranslations;
+                for (const p of key.split('.')) {
+                    if (curr && typeof curr === 'object' && p in curr) curr = curr[p];
+                    else return fallback || key;
+                }
+                return (typeof curr === 'string' || typeof curr === 'number') ? String(curr) : (fallback || key);
+            } catch (e) {
+                return fallback || key;
             }
-            return (typeof curr === 'string' || typeof curr === 'number') ? String(curr) : (fallback || key);
         },
 
         async loadLanguage(file) {
-            const langFile = file || this.selectedLangFile || 'english.json';
-            const rtlFiles = window.RTL_LANG_FILES || ['arabic.json', 'urdu.json', 'hebrew.json'];
-            this.isRTL = rtlFiles.includes(langFile);
-
             try {
-                const res = await fetch(`languages/${langFile}?t=${Date.now()}`);
-                if (res.ok) {
-                    this.currentLangTranslations = await res.json();
-                } else {
-                    const fallbackRes = await fetch(`languages/english.json?t=${Date.now()}`);
-                    if (fallbackRes.ok) this.currentLangTranslations = await fallbackRes.json();
+                const langFile = file || this.selectedLangFile || 'english.json';
+                const rtlFiles = window.RTL_LANG_FILES || ['arabic.json', 'urdu.json', 'hebrew.json'];
+                this.isRTL = rtlFiles.includes(langFile);
+
+                try {
+                    const res = await fetch(`languages/${langFile}?t=${Date.now()}`);
+                    if (res.ok) {
+                        this.currentLangTranslations = await res.json();
+                    } else {
+                        const fallbackRes = await fetch(`languages/english.json?t=${Date.now()}`);
+                        if (fallbackRes.ok) this.currentLangTranslations = await fallbackRes.json();
+                    }
+                } catch (fetchErr) {
+                    console.warn('[LanguageEngine] Error fetching language:', langFile, fetchErr);
                 }
+
+                try {
+                    const html = document.documentElement;
+                    if (html) {
+                        html.setAttribute('dir', this.isRTL ? 'rtl' : 'ltr');
+                        html.setAttribute('lang', this.currentLangTranslations?.lang_code || (this.isRTL ? 'ar' : 'en'));
+                    }
+                    if (document.body) {
+                        document.body.classList.toggle('rtl', this.isRTL);
+                        document.body.classList.toggle('ltr', !this.isRTL);
+                    }
+                } catch (domErr) {
+                    console.warn('[LanguageEngine] DOM attribute error:', domErr);
+                }
+
+                this.updateClock();
+                this.updateGreeting();
+                this.updateWeatherStr();
             } catch (err) {
-                console.warn('[LanguageEngine] Error loading language:', langFile, err);
+                console.warn('[LanguageEngine] Error in loadLanguage:', err);
             }
-
-            const html = document.documentElement;
-            if (html) {
-                html.setAttribute('dir', this.isRTL ? 'rtl' : 'ltr');
-                html.setAttribute('lang', this.currentLangTranslations.lang_code || (this.isRTL ? 'ar' : 'en'));
-            }
-            document.body.classList.toggle('rtl', this.isRTL);
-            document.body.classList.toggle('ltr', !this.isRTL);
-
-            this.updateClock();
-            this.updateGreeting();
-            this.updateWeatherStr();
         },
 
         updateGreeting() {
-            const h = new Date().getHours();
-            const timeKey = (h >= 4 && h < 12) ? 'morning' : (h >= 12 && h < 17) ? 'afternoon' : (h >= 17 && h < 22) ? 'evening' : 'night';
-            const defaultGreeting = (h >= 4 && h < 12) ? 'Good Morning' : (h >= 12 && h < 17) ? 'Good Afternoon' : (h >= 17 && h < 22) ? 'Good Evening' : 'Good Night';
-            const timeGreeting = this.t(`greetings.${timeKey}`, defaultGreeting);
+            try {
+                const h = new Date().getHours();
+                const timeKey = (h >= 4 && h < 12) ? 'morning' : (h >= 12 && h < 17) ? 'afternoon' : (h >= 17 && h < 22) ? 'evening' : 'night';
+                const defaultGreeting = (h >= 4 && h < 12) ? 'Good Morning' : (h >= 12 && h < 17) ? 'Good Afternoon' : (h >= 17 && h < 22) ? 'Good Evening' : 'Good Night';
+                const timeGreeting = this.t(`greetings.${timeKey}`, defaultGreeting);
 
-            let guestName = 'Guest';
-            if (this.hotelData.guest_info) {
-                guestName = (typeof this.hotelData.guest_info === 'string')
-                    ? this.hotelData.guest_info.trim()
-                    : (this.hotelData.guest_info.name || this.hotelData.guest_info.guest_name || 'Guest');
+                let guestName = 'Guest';
+                if (this.hotelData?.guest_info) {
+                    guestName = (typeof this.hotelData.guest_info === 'string')
+                        ? this.hotelData.guest_info.trim()
+                        : (this.hotelData.guest_info.name || this.hotelData.guest_info.guest_name || 'Guest');
+                }
+                this.greetingStr = `${timeGreeting}, ${guestName}`;
+            } catch (e) {
+                this.greetingStr = 'Welcome, Guest';
             }
-            this.greetingStr = `${timeGreeting}, ${guestName}`;
         },
 
         updateClock() {
-            const now = new Date();
-            let hours = now.getHours();
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12 || 12;
-            this.timeStr = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+            try {
+                const now = new Date();
+                let hours = now.getHours();
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                this.timeStr = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
 
-            const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-            const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-            const defaultDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const defaultMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                const defaultDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const defaultMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-            const dKey = dayKeys[now.getDay()];
-            const mKey = monthKeys[now.getMonth()];
-            const dayStr = this.t(`days_short.${dKey}`, this.t(`days.${dKey}`, defaultDays[now.getDay()]));
-            const monthStr = this.t(`months.${mKey}`, defaultMonths[now.getMonth()]);
-            this.dateStr = `${dayStr}, ${monthStr} ${now.getDate()}`;
+                const dKey = dayKeys[now.getDay()];
+                const mKey = monthKeys[now.getMonth()];
+                const dayStr = this.t(`days_short.${dKey}`, this.t(`days.${dKey}`, defaultDays[now.getDay()]));
+                const monthStr = this.t(`months.${mKey}`, defaultMonths[now.getMonth()]);
+                this.dateStr = `${dayStr}, ${monthStr} ${now.getDate()}`;
+            } catch (e) {
+                console.warn('[TVApp] updateClock error:', e);
+            }
         },
 
         updateWeatherStr() {
-            if (typeof this.updateWeatherHeaderStr === 'function') {
-                this.updateWeatherHeaderStr();
-            } else {
+            try {
+                if (typeof this.updateWeatherHeaderStr === 'function') {
+                    this.updateWeatherHeaderStr();
+                } else {
+                    this.weatherStr = '';
+                }
+            } catch (e) {
                 this.weatherStr = '';
             }
         },
 
         showToast(msg) {
-            this.toastMessage = msg;
-            if (this.toastTimer) clearTimeout(this.toastTimer);
-            this.toastTimer = setTimeout(() => {
-                this.toastMessage = '';
-            }, 3000);
+            try {
+                this.toastMessage = msg;
+                if (this.toastTimer) clearTimeout(this.toastTimer);
+                this.toastTimer = setTimeout(() => {
+                    try { this.toastMessage = ''; } catch (_) {}
+                }, 3000);
+            } catch (e) {
+                console.warn('[TVApp] showToast error:', e);
+            }
         },
 
         // --- MENU CONTROLLER ---
         initMenuData(sourceMenus = null) {
-            let raw = sourceMenus;
-            if (!raw && Array.isArray(this.hotelData?.menus) && this.hotelData.menus.length > 0) {
-                raw = this.hotelData.menus;
-            }
-            if (!raw) {
-                try {
-                    const cached = localStorage.getItem('cachedHotelData');
-                    if (cached) {
-                        const parsed = JSON.parse(cached);
-                        if (Array.isArray(parsed?.menus) && parsed.menus.length > 0) {
-                            raw = parsed.menus;
+            try {
+                let raw = sourceMenus;
+                if (!raw && Array.isArray(this.hotelData?.menus) && this.hotelData.menus.length > 0) {
+                    raw = this.hotelData.menus;
+                }
+                if (!raw) {
+                    try {
+                        const cached = localStorage.getItem('cachedHotelData');
+                        if (cached) {
+                            const parsed = JSON.parse(cached);
+                            if (Array.isArray(parsed?.menus) && parsed.menus.length > 0) {
+                                raw = parsed.menus;
+                            }
                         }
-                    }
-                } catch (_) {}
-            }
-            if (!raw && Array.isArray(window.MENU_DATA)) {
-                raw = window.MENU_DATA;
-            }
-            raw = Array.isArray(raw) ? raw : [];
+                    } catch (_) {}
+                }
+                if (!raw && Array.isArray(window.MENU_DATA)) {
+                    raw = window.MENU_DATA;
+                }
+                raw = Array.isArray(raw) ? raw : [];
 
-            this.menuItems = this.filterActiveMenus(raw);
-            if (this.menuStack.length === 0) {
-                this.currentMenuList = this.menuItems;
-                this.currentMenuTitle = 'Main Menu';
+                this.menuItems = this.filterActiveMenus(raw);
+                if (this.menuStack.length === 0) {
+                    this.currentMenuList = this.menuItems;
+                    this.currentMenuTitle = 'Main Menu';
+                }
+                if (this.activeMenuIndex >= this.currentMenuList.length) {
+                    this.activeMenuIndex = Math.max(0, this.currentMenuList.length - 1);
+                }
+                this.preloadMenuIcons(this.menuItems);
+            } catch (e) {
+                console.warn('[TVApp] initMenuData error:', e);
             }
-            if (this.activeMenuIndex >= this.currentMenuList.length) {
-                this.activeMenuIndex = Math.max(0, this.currentMenuList.length - 1);
-            }
-            this.preloadMenuIcons(this.menuItems);
         },
 
         preloadMenuIcons(items) {
-            if (!Array.isArray(items)) return;
-            items.forEach(item => {
-                const src = this.getMenuIcon(item);
-                if (src) {
-                    const img = new Image();
-                    img.src = src;
-                }
-                if (Array.isArray(item.sub_menus) && item.sub_menus.length > 0) {
-                    this.preloadMenuIcons(item.sub_menus);
-                }
-            });
-            // Preload weather & static assets to ensure zero offline failure
-            ['sunny.png', 'cloudy.png', 'rainy.png', 'rainy-day.png', 'rainy-night.png', 'storm.png'].forEach(f => {
-                const wImg = new Image();
-                wImg.src = `assets/images/weather/${f}`;
-            });
+            try {
+                if (!Array.isArray(items)) return;
+                items.forEach(item => {
+                    try {
+                        const src = this.getMenuIcon(item);
+                        if (src) {
+                            const img = new Image();
+                            img.src = src;
+                        }
+                        if (Array.isArray(item.sub_menus) && item.sub_menus.length > 0) {
+                            this.preloadMenuIcons(item.sub_menus);
+                        }
+                    } catch (_) {}
+                });
+                // Preload weather & static assets to ensure zero offline failure
+                ['sunny.png', 'cloudy.png', 'rainy.png', 'rainy-day.png', 'rainy-night.png', 'storm.png'].forEach(f => {
+                    try {
+                        const wImg = new Image();
+                        wImg.src = `assets/images/weather/${f}`;
+                    } catch (_) {}
+                });
+            } catch (e) {
+                console.warn('[TVApp] preloadMenuIcons error:', e);
+            }
         },
 
         getMenuTitle(item) {
-            if (!item) return '';
-            const idKey = (item.id || '').toLowerCase().replace(/[\s-]+/g, '_');
-            const nameKey = (item.name || '').toLowerCase().replace(/[\s-]+/g, '_');
-            const key = idKey === 'apps' ? 'applications' : idKey === 'livetv' ? 'live_tv' : idKey === 'ourcity' ? 'our_city' : idKey;
+            try {
+                if (!item) return '';
+                const idKey = (item.id || '').toLowerCase().replace(/[\s-]+/g, '_');
+                const nameKey = (item.name || '').toLowerCase().replace(/[\s-]+/g, '_');
+                const key = idKey === 'apps' ? 'applications' : idKey === 'livetv' ? 'live_tv' : idKey === 'ourcity' ? 'our_city' : idKey;
 
-            const trKey = this.t(`icons.${key}`, '');
-            if (trKey && trKey !== `icons.${key}`) return trKey;
+                const trKey = this.t(`icons.${key}`, '');
+                if (trKey && trKey !== `icons.${key}`) return trKey;
 
-            const trName = this.t(`icons.${nameKey}`, '');
-            if (trName && trName !== `icons.${nameKey}`) return trName;
+                const trName = this.t(`icons.${nameKey}`, '');
+                if (trName && trName !== `icons.${nameKey}`) return trName;
 
-            return item.name || '';
+                return item.name || '';
+            } catch (e) {
+                return item?.name || '';
+            }
         },
 
         filterActiveMenus(items) {
-            if (!Array.isArray(items)) return [];
-            return items.filter(item => {
-                if (!item) return false;
-                const s = String(item.status ?? 'show').trim().toLowerCase();
-                return s !== 'hide' && s !== 'false' && s !== '0' && item.status !== false;
-            }).map(item => {
-                const cloned = { ...item };
-                if (Array.isArray(cloned.sub_menus) && cloned.sub_menus.length > 0) {
-                    cloned.sub_menus = this.filterActiveMenus(cloned.sub_menus);
-                }
-                return cloned;
-            });
+            try {
+                if (!Array.isArray(items)) return [];
+                return items.filter(item => {
+                    if (!item) return false;
+                    const s = String(item.status ?? 'show').trim().toLowerCase();
+                    return s !== 'hide' && s !== 'false' && s !== '0' && item.status !== false;
+                }).map(item => {
+                    const cloned = { ...item };
+                    if (Array.isArray(cloned.sub_menus) && cloned.sub_menus.length > 0) {
+                        cloned.sub_menus = this.filterActiveMenus(cloned.sub_menus);
+                    }
+                    return cloned;
+                });
+            } catch (e) {
+                console.warn('[TVApp] filterActiveMenus error:', e);
+                return Array.isArray(items) ? items : [];
+            }
         },
 
         getMenuIcon(item) {
-            if (!item) return '';
-            let icon = (item.icon || '').replace(/\\/g, '/').trim();
-            if (icon) {
-                if (icon.startsWith('http') || icon.startsWith('assets/') || icon.includes('/')) return icon;
-                return `assets/images/icons/${icon.replace(/\.png$/i, '')}.png`;
+            try {
+                if (!item) return '';
+                let icon = (item.icon || '').replace(/\\/g, '/').trim();
+                if (icon) {
+                    if (icon.startsWith('http') || icon.startsWith('assets/') || icon.includes('/')) return icon;
+                    return `assets/images/icons/${icon.replace(/\.png$/i, '')}.png`;
+                }
+                if (item.id) {
+                    const idKey = (item.id || '').toLowerCase().replace(/[\s-]+/g, '_');
+                    const map = {
+                        hotel_menu: 'hotelinfo',
+                        hotel_info: 'hotelinfo',
+                        room_info: 'amenities',
+                        amenities: 'roomservice',
+                        interactive_services: 'roomservice',
+                        apps: 'apps',
+                        applications: 'apps',
+                        language: 'languages',
+                        languages: 'languages',
+                        livetv: 'livetv',
+                        live_tv: 'livetv',
+                        flights: 'flights',
+                        flight: 'flights',
+                        weather: 'weather',
+                        input: 'input',
+                        inputs: 'input',
+                        hdmi: 'input',
+                        settings: 'settings',
+                        admin: 'settings',
+                        ourcity: 'ourcity',
+                        our_city: 'ourcity',
+                        screen_cast: 'cast',
+                        cast: 'cast'
+                    };
+                    const iconFile = map[idKey] || idKey;
+                    return `assets/images/icons/${iconFile}.png`;
+                }
+                return '';
+            } catch (e) {
+                return '';
             }
-            if (item.id) {
-                const idKey = (item.id || '').toLowerCase().replace(/[\s-]+/g, '_');
-                const map = {
-                    hotel_menu: 'hotelinfo',
-                    hotel_info: 'hotelinfo',
-                    room_info: 'amenities',
-                    amenities: 'roomservice',
-                    interactive_services: 'roomservice',
-                    apps: 'apps',
-                    applications: 'apps',
-                    language: 'languages',
-                    languages: 'languages',
-                    livetv: 'livetv',
-                    live_tv: 'livetv',
-                    flights: 'flights',
-                    flight: 'flights',
-                    weather: 'weather',
-                    input: 'input',
-                    inputs: 'input',
-                    hdmi: 'input',
-                    settings: 'settings',
-                    admin: 'settings',
-                    ourcity: 'ourcity',
-                    our_city: 'ourcity',
-                    screen_cast: 'cast',
-                    cast: 'cast'
-                };
-                const iconFile = map[idKey] || idKey;
-                return `assets/images/icons/${iconFile}.png`;
-            }
-            return '';
         },
 
         // --- ADAPTIVE TV CAROUSEL MATH ---
         getVisibleSlots() {
-            const list = this.currentMenuList;
-            if (!list || list.length === 0) return [];
-            const len = list.length;
+            try {
+                const list = this.currentMenuList;
+                if (!list || list.length === 0) return [];
+                const len = list.length;
 
-            let offsets = [];
-            if (len === 1) offsets = [0];
-            else if (len === 2) offsets = [0, 1];
-            else if (len === 3) offsets = [-1, 0, 1];
-            else if (len <= 5) offsets = [-2, -1, 0, 1, 2];
-            else offsets = [-3, -2, -1, 0, 1, 2, 3];
+                let offsets = [];
+                if (len === 1) offsets = [0];
+                else if (len === 2) offsets = [0, 1];
+                else if (len === 3) offsets = [-1, 0, 1];
+                else if (len <= 5) offsets = [-2, -1, 0, 1, 2];
+                else offsets = [-3, -2, -1, 0, 1, 2, 3];
 
-            return offsets.map((offset, slotIdx) => {
-                const normIndex = ((this.activeMenuIndex + offset) % len + len) % len;
-                const item = list[normIndex];
-                const dist = Math.abs(offset);
-                const isCenter = (offset === 0);
+                return offsets.map((offset, slotIdx) => {
+                    const normIndex = ((this.activeMenuIndex + offset) % len + len) % len;
+                    const item = list[normIndex];
+                    const dist = Math.abs(offset);
+                    const isCenter = (offset === 0);
 
-                let scaleClass = 'scale-90 opacity-45 hover:opacity-75 z-0';
-                if (isCenter) scaleClass = 'scale-110 opacity-100 z-20';
-                else if (dist === 1) scaleClass = 'scale-100 opacity-80 hover:opacity-100 z-10';
-                else if (dist === 2) scaleClass = 'scale-95 opacity-65 hover:opacity-90 z-5';
+                    let scaleClass = 'scale-90 opacity-45 hover:opacity-75 z-0';
+                    if (isCenter) scaleClass = 'scale-110 opacity-100 z-20';
+                    else if (dist === 1) scaleClass = 'scale-100 opacity-80 hover:opacity-100 z-10';
+                    else if (dist === 2) scaleClass = 'scale-95 opacity-65 hover:opacity-90 z-5';
 
-                return {
-                    slotIdx, offset, dist, isCenter, index: normIndex, item,
-                    uniqueKey: `d${this.menuStack.length}-s${slotIdx}-off${offset}-id${item.id || normIndex}`,
-                    scaleClass,
-                    imgClass: isCenter
-                        ? 'w-56 h-56 border-4 border-amber-400 shadow-[0_0_35px_rgba(255,215,0,0.9),0_0_15px_rgba(179,138,45,0.7)]'
-                        : 'w-48 h-48 border-0',
-                    textClass: isCenter
-                        ? 'text-2xl font-black text-amber-400 drop-shadow-[0_0_14px_rgba(255,215,0,0.9)]'
-                        : 'text-xl font-bold text-slate-200 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]'
-                };
-            });
+                    return {
+                        slotIdx, offset, dist, isCenter, index: normIndex, item,
+                        uniqueKey: `d${this.menuStack.length}-s${slotIdx}-off${offset}-id${item?.id || normIndex}`,
+                        scaleClass,
+                        imgClass: isCenter
+                            ? 'w-56 h-56 border-4 border-amber-400 shadow-[0_0_35px_rgba(255,215,0,0.9),0_0_15px_rgba(179,138,45,0.7)]'
+                            : 'w-48 h-48 border-0',
+                        textClass: isCenter
+                            ? 'text-2xl font-black text-amber-400 drop-shadow-[0_0_14px_rgba(255,215,0,0.9)]'
+                            : 'text-xl font-bold text-slate-200 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]'
+                    };
+                });
+            } catch (e) {
+                console.warn('[TVApp] getVisibleSlots error:', e);
+                return [];
+            }
         },
 
         slideMenu(dir) {
-            const len = this.currentMenuList.length;
-            if (len > 0) this.activeMenuIndex = ((this.activeMenuIndex + dir) % len + len) % len;
+            try {
+                const len = this.currentMenuList.length;
+                if (len > 0) this.activeMenuIndex = ((this.activeMenuIndex + dir) % len + len) % len;
+            } catch (e) {
+                console.warn('[TVApp] slideMenu error:', e);
+            }
         },
 
         onSlotClick(slot) {
-            if (!slot) return;
-            if (slot.isCenter) this.selectMenuItem(slot.item);
-            else this.slideMenu(slot.offset);
+            try {
+                if (!slot) return;
+                if (slot.isCenter) this.selectMenuItem(slot.item);
+                else this.slideMenu(slot.offset);
+            } catch (e) {
+                console.warn('[TVApp] onSlotClick error:', e);
+            }
         },
 
         selectMenuItem(item) {
-            if (!item) return;
-            if (Array.isArray(item.sub_menus) && item.sub_menus.length > 0) {
-                this.isMenuFlipping = true;
-                setTimeout(() => {
-                    this.menuStack.push({ list: this.currentMenuList, index: this.activeMenuIndex, title: this.currentMenuTitle });
-                    this.currentMenuList = item.sub_menus;
-                    this.activeMenuIndex = 0;
-                    this.currentMenuTitle = item.name;
-                    setTimeout(() => { this.isMenuFlipping = false; }, 150);
-                }, 200);
-                return;
-            }
+            try {
+                if (!item) return;
+                if (Array.isArray(item.sub_menus) && item.sub_menus.length > 0) {
+                    this.isMenuFlipping = true;
+                    setTimeout(() => {
+                        try {
+                            this.menuStack.push({ list: this.currentMenuList, index: this.activeMenuIndex, title: this.currentMenuTitle });
+                            this.currentMenuList = item.sub_menus;
+                            this.activeMenuIndex = 0;
+                            this.currentMenuTitle = item.name;
+                            setTimeout(() => { this.isMenuFlipping = false; }, 150);
+                        } catch (_) {
+                            this.isMenuFlipping = false;
+                        }
+                    }, 200);
+                    return;
+                }
 
-            if (['weather', 'flights', 'flight'].includes(item.id) && !navigator.onLine) {
-                this.showToast('No Internet Connection. Please connect to internet.');
-                return;
-            }
+                if (['weather', 'flights', 'flight'].includes(item.id) && !navigator.onLine) {
+                    this.showToast('No Internet Connection. Please connect to internet.');
+                    return;
+                }
 
-            if (['livetv', 'live_tv'].includes(item.id)) {
-                this.launchDefaultLiveTv();
-                return;
-            }
+                if (['livetv', 'live_tv'].includes(item.id)) {
+                    this.launchDefaultLiveTv();
+                    return;
+                }
 
-            this.navigate(item.id);
+                this.navigate(item.id);
+            } catch (e) {
+                console.warn('[TVApp] selectMenuItem error:', e);
+            }
         },
 
         async launchDefaultLiveTv() {
-            const defaultPort = localStorage.getItem('last_tv_input_port') || this.liveTvSelectedPort || 'HDMI 1';
-            console.log('[TVApp] Launching Live TV with default target:', defaultPort);
+            try {
+                const defaultPort = localStorage.getItem('last_tv_input_port') || this.liveTvSelectedPort || 'HDMI 1';
+                console.log('[TVApp] Launching Live TV with default target:', defaultPort);
 
-            const isBridge = Boolean(window.flutterBridge?.isAvailable?.());
+                const isBridge = Boolean(window.flutterBridge?.isAvailable?.());
 
-            if (defaultPort.startsWith('APP:')) {
-                const pkg = defaultPort.replace(/^APP:/i, '').trim();
-                let appName = 'Application';
-                const found = (this.availableOttApps || []).find(a => (a.package_name || a.id) === pkg) ||
-                              (this.installedApps || []).find(a => (a.package_name || a.id) === pkg);
-                if (found && found.name) {
-                    appName = found.name;
-                }
-                this.showToast(`Launching ${appName}...`);
+                const isApp = defaultPort.startsWith('APP:') ||
+                              /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)+$/.test(defaultPort) ||
+                              (!defaultPort.toUpperCase().startsWith('HDMI') && defaultPort.toUpperCase() !== 'IPTV');
 
-                if (isBridge && window.flutterBridge?.launchApp) {
-                    try { await window.flutterBridge.launchApp(pkg); } catch (e) { console.warn('[TVApp] launchApp warning:', e); }
-                } else if (window.FlutterBridge?.postMessage) {
-                    window.FlutterBridge.postMessage(JSON.stringify({ method: 'launchApp', args: [pkg], id: Date.now() }));
-                } else if (window.AndroidBridge?.launchApp) {
-                    window.AndroidBridge.launchApp(pkg);
-                } else {
-                    console.log(`[TVApp] Browser preview: Launched App (${appName} - ${pkg})`);
-                }
-            } else if (defaultPort === 'IPTV') {
-                this.showToast('Launching IPTV Channels...');
-                if (isBridge && window.flutterBridge?.launchIptv) {
-                    try { await window.flutterBridge.launchIptv('iptv', 'iptv/all.json'); } catch (e) { console.warn('[TVApp] launchIptv warning:', e); }
-                } else if (isBridge && window.flutterBridge?.launchLiveTv) {
-                    try { await window.flutterBridge.launchLiveTv('IPTV'); } catch (e) { console.warn('[TVApp] launchLiveTv IPTV warning:', e); }
-                } else if (window.FlutterBridge?.postMessage) {
-                    window.FlutterBridge.postMessage(JSON.stringify({ method: 'launchIptv', args: ['iptv', 'iptv/all.json'], id: Date.now() }));
-                } else {
-                    console.log('[TVApp] Browser preview: Launched IPTV Stream');
-                }
-            } else {
-                // HDMI / Hardware Port (e.g. HDMI 1, HDMI 2, etc.)
-                this.showToast(`Switching to ${defaultPort}...`);
-                if (isBridge && window.flutterBridge?.launchHdmi) {
-                    try {
-                        await window.flutterBridge.launchHdmi(defaultPort);
-                    } catch (_) {
-                        if (window.flutterBridge?.launchLiveTv) {
-                            try { await window.flutterBridge.launchLiveTv(defaultPort); } catch (e) { console.warn('[TVApp] launchLiveTv warning:', e); }
-                        }
+                if (isApp) {
+                    const pkg = defaultPort.replace(/^APP:/i, '').trim();
+                    let appName = 'Application';
+                    const found = (this.availableOttApps || []).find(a => (a.package_name || a.id) === pkg) ||
+                                  (this.installedApps || []).find(a => (a.package_name || a.id) === pkg) ||
+                                  (this.hotelData?.active_ott || []).find(a => (a.package_name || a.id) === pkg);
+                    if (found && found.name) {
+                        appName = found.name;
                     }
-                } else if (isBridge && window.flutterBridge?.launchLiveTv) {
-                    try { await window.flutterBridge.launchLiveTv(defaultPort); } catch (e) { console.warn('[TVApp] launchLiveTv warning:', e); }
-                } else if (window.FlutterBridge?.postMessage) {
-                    window.FlutterBridge.postMessage(JSON.stringify({ method: 'launchHdmi', args: [defaultPort], id: Date.now() }));
+                    this.showToast(`Launching ${appName}...`);
+
+                    if (isBridge && window.flutterBridge?.launchApp) {
+                        try { await window.flutterBridge.launchApp(pkg); } catch (e) { console.warn('[TVApp] launchApp warning:', e); }
+                    } else if (window.FlutterBridge?.postMessage) {
+                        window.FlutterBridge.postMessage(JSON.stringify({ method: 'launchApp', args: [pkg], id: Date.now() }));
+                    } else if (window.AndroidBridge?.launchApp) {
+                        window.AndroidBridge.launchApp(pkg);
+                    } else {
+                        console.log(`[TVApp] Browser preview: Launched App (${appName} - ${pkg})`);
+                    }
+                } else if (defaultPort === 'IPTV') {
+                    this.showToast('Launching IPTV Channels...');
+                    if (isBridge && window.flutterBridge?.launchIptv) {
+                        try { await window.flutterBridge.launchIptv('iptv', 'iptv/all.json'); } catch (e) { console.warn('[TVApp] launchIptv warning:', e); }
+                    } else if (isBridge && window.flutterBridge?.launchLiveTv) {
+                        try { await window.flutterBridge.launchLiveTv('IPTV'); } catch (e) { console.warn('[TVApp] launchLiveTv IPTV warning:', e); }
+                    } else if (window.FlutterBridge?.postMessage) {
+                        window.FlutterBridge.postMessage(JSON.stringify({ method: 'launchIptv', args: ['iptv', 'iptv/all.json'], id: Date.now() }));
+                    } else {
+                        console.log('[TVApp] Browser preview: Launched IPTV Stream');
+                    }
                 } else {
-                    console.log(`[TVApp] Browser preview: Switched to ${defaultPort}`);
+                    // HDMI / Hardware Port (e.g. HDMI 1, HDMI 2, etc.)
+                    this.showToast(`Switching to ${defaultPort}...`);
+                    if (isBridge && window.flutterBridge?.launchHdmi) {
+                        try {
+                            await window.flutterBridge.launchHdmi(defaultPort);
+                        } catch (_) {
+                            if (window.flutterBridge?.launchLiveTv) {
+                                try { await window.flutterBridge.launchLiveTv(defaultPort); } catch (e) { console.warn('[TVApp] launchLiveTv warning:', e); }
+                            }
+                        }
+                    } else if (isBridge && window.flutterBridge?.launchLiveTv) {
+                        try { await window.flutterBridge.launchLiveTv(defaultPort); } catch (e) { console.warn('[TVApp] launchLiveTv warning:', e); }
+                    } else if (window.FlutterBridge?.postMessage) {
+                        window.FlutterBridge.postMessage(JSON.stringify({ method: 'launchHdmi', args: [defaultPort], id: Date.now() }));
+                    } else {
+                        console.log(`[TVApp] Browser preview: Switched to ${defaultPort}`);
+                    }
                 }
+            } catch (err) {
+                console.warn('[TVApp] launchDefaultLiveTv error:', err);
             }
         },
 
         navigate(viewId) {
-            if (['weather', 'flights', 'flight'].includes(viewId) && !navigator.onLine) {
-                this.showToast('No Internet Connection. Please connect to internet.');
-                return;
-            }
-
-            if (['livetv', 'live_tv'].includes(viewId)) {
-                this.launchDefaultLiveTv();
-                return;
-            }
-
-            const targetView = (viewId === 'ourcity') ? 'our_city' : viewId;
-
-            if (this.currentView !== targetView) {
-                this.viewHistory.push(this.currentView);
-                this.currentView = targetView;
-                if (['hotel_info', 'room_info', 'amenities', 'our_city'].includes(targetView)) {
-                    this.infoSlideIndex = 0;
-                    this.resetInfoScroll();
-                    this.startInfoAutoSlide();
-                } else if (['language', 'languages'].includes(targetView)) {
-                    const foundIdx = this.availableLanguages.findIndex(l => l.file === this.selectedLangFile);
-                    this.activeLangFocusIndex = foundIdx >= 0 ? foundIdx : 0;
-                    this.focusCurrentLanguage();
-                } else if (['apps', 'applications'].includes(viewId)) {
-                    this.activeAppFocusIndex = 0;
-                    this.focusCurrentApp();
-                } else if (['screen_cast', 'cast'].includes(viewId)) {
-                    this.openScreenCast();
-                } else if (viewId === 'weather') {
-                    this.openWeather();
-                } else if (['input', 'inputs', 'hdmi'].includes(viewId)) {
-                    this.openInputSources();
-                } else if (['settings', 'admin'].includes(viewId)) {
-                    this.openSettingsAuth();
-                } else if (['flights', 'flight'].includes(viewId)) {
-                    this.openFlights();
+            try {
+                if (['weather', 'flights', 'flight'].includes(viewId) && !navigator.onLine) {
+                    this.showToast('No Internet Connection. Please connect to internet.');
+                    return;
                 }
+
+                if (['livetv', 'live_tv'].includes(viewId)) {
+                    this.launchDefaultLiveTv();
+                    return;
+                }
+
+                const targetView = (viewId === 'ourcity') ? 'our_city' : viewId;
+
+                if (this.currentView !== targetView) {
+                    this.viewHistory.push(this.currentView);
+                    this.currentView = targetView;
+                    if (['hotel_info', 'room_info', 'amenities', 'our_city'].includes(targetView)) {
+                        this.infoSlideIndex = 0;
+                        this.resetInfoScroll();
+                        this.startInfoAutoSlide();
+                    } else if (['language', 'languages'].includes(targetView)) {
+                        const foundIdx = this.availableLanguages.findIndex(l => l.file === this.selectedLangFile);
+                        this.activeLangFocusIndex = foundIdx >= 0 ? foundIdx : 0;
+                        this.focusCurrentLanguage();
+                    } else if (['apps', 'applications'].includes(viewId)) {
+                        this.activeAppFocusIndex = 0;
+                        this.focusCurrentApp();
+                    } else if (['screen_cast', 'cast'].includes(viewId)) {
+                        this.openScreenCast();
+                    } else if (viewId === 'weather') {
+                        this.openWeather();
+                    } else if (['input', 'inputs', 'hdmi'].includes(viewId)) {
+                        this.openInputSources();
+                    } else if (['settings', 'admin'].includes(viewId)) {
+                        this.openSettingsAuth();
+                    } else if (['flights', 'flight'].includes(viewId)) {
+                        this.openFlights();
+                    }
+                }
+            } catch (e) {
+                console.warn('[TVApp] navigate error:', e);
             }
         },
 
         // --- LANGUAGES MODAL CONTROLLER ---
         selectLanguage(file, idx) {
-            this.selectedLangFile = file;
-            this.justSelectedLang = true;
-            if (typeof idx === 'number') {
-                this.activeLangFocusIndex = idx;
-                this.focusCurrentLanguage();
+            try {
+                this.selectedLangFile = file;
+                this.justSelectedLang = true;
+                if (typeof idx === 'number') {
+                    this.activeLangFocusIndex = idx;
+                    this.focusCurrentLanguage();
+                }
+            } catch (e) {
+                console.warn('[TVApp] selectLanguage error:', e);
             }
         },
 
         async applyLanguage() {
-            localStorage.setItem('selectedLangFile', this.selectedLangFile);
-            await this.loadLanguage(this.selectedLangFile);
-            if (window.flutterBridge?.setLanguage) window.flutterBridge.setLanguage(this.selectedLangFile).catch(() => { });
-            if (window.AndroidBridge?.setLanguage) window.AndroidBridge.setLanguage(this.selectedLangFile);
-            this.goBack();
+            try {
+                localStorage.setItem('selectedLangFile', this.selectedLangFile);
+                await this.loadLanguage(this.selectedLangFile);
+                if (window.flutterBridge?.setLanguage) window.flutterBridge.setLanguage(this.selectedLangFile).catch(() => { });
+                if (window.AndroidBridge?.setLanguage) window.AndroidBridge.setLanguage(this.selectedLangFile);
+                this.goBack();
+            } catch (e) {
+                console.warn('[TVApp] applyLanguage error:', e);
+            }
         },
 
         focusCurrentLanguage() {
-            this.$nextTick(() => {
-                if (typeof this.activeLangFocusIndex === 'number') {
-                    const el = document.getElementById(`lang_item_${this.activeLangFocusIndex}`);
-                    if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-                } else if (this.activeLangFocusIndex === 'apply') {
-                    document.getElementById('lang-btn-apply')?.focus();
-                } else if (this.activeLangFocusIndex === 'cancel') {
-                    document.getElementById('lang-btn-cancel')?.focus();
-                }
-            });
+            try {
+                const nextTick = (typeof this.$nextTick === 'function') ? this.$nextTick.bind(this) : (fn) => setTimeout(fn, 0);
+                nextTick(() => {
+                    try {
+                        if (typeof this.activeLangFocusIndex === 'number') {
+                            const el = document.getElementById(`lang_item_${this.activeLangFocusIndex}`);
+                            if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+                        } else if (this.activeLangFocusIndex === 'apply') {
+                            document.getElementById('lang-btn-apply')?.focus();
+                        } else if (this.activeLangFocusIndex === 'cancel') {
+                            document.getElementById('lang-btn-cancel')?.focus();
+                        }
+                    } catch (_) {}
+                });
+            } catch (e) {
+                console.warn('[TVApp] focusCurrentLanguage error:', e);
+            }
         },
 
         goBack() {
-            this.stopInfoAutoSlide();
-            if (['settings', 'admin'].includes(this.currentView)) {
-                this.settingsStep = 'auth';
-                this.settingsPin = '';
-                this.maskedPin = ['•', '•', '•', '•', '•', '•'];
-                this.authStatus = 'idle';
-                this.authMessage = '';
-            }
-            if (document.activeElement?.blur) document.activeElement.blur();
-            if (this.currentView !== 'home') {
-                this.currentView = this.viewHistory.pop() || 'home';
-                return;
-            }
-            if (this.menuStack.length > 0) {
-                this.isMenuFlipping = true;
-                setTimeout(() => {
-                    const prev = this.menuStack.pop();
-                    this.currentMenuList = prev.list;
-                    this.activeMenuIndex = prev.index;
-                    this.currentMenuTitle = prev.title;
-                    setTimeout(() => { this.isMenuFlipping = false; }, 150);
-                }, 200);
+            try {
+                this.stopInfoAutoSlide();
+                if (['settings', 'admin'].includes(this.currentView)) {
+                    this.settingsStep = 'auth';
+                    this.settingsPin = '';
+                    this.maskedPin = ['•', '•', '•', '•', '•', '•'];
+                    this.authStatus = 'idle';
+                    this.authMessage = '';
+                }
+                if (document.activeElement?.blur) document.activeElement.blur();
+                if (this.currentView !== 'home') {
+                    this.currentView = this.viewHistory.pop() || 'home';
+                    return;
+                }
+                if (this.menuStack.length > 0) {
+                    this.isMenuFlipping = true;
+                    setTimeout(() => {
+                        try {
+                            const prev = this.menuStack.pop();
+                            this.currentMenuList = prev.list;
+                            this.activeMenuIndex = prev.index;
+                            this.currentMenuTitle = prev.title;
+                            setTimeout(() => { this.isMenuFlipping = false; }, 150);
+                        } catch (_) {
+                            this.isMenuFlipping = false;
+                        }
+                    }, 200);
+                }
+            } catch (e) {
+                console.warn('[TVApp] goBack error:', e);
             }
         },
 
         // --- HEADER NAVIGATION HANDLERS ---
         onHeaderBackFocus() {
-            const view = this.currentView;
-            if (['apps', 'applications'].includes(view)) {
-                this.activeAppFocusIndex = 'header_back';
-            } else if (['language', 'languages'].includes(view)) {
-                this.activeLangFocusIndex = 'header_back';
-            } else if (['input', 'inputs', 'hdmi'].includes(view)) {
-                this.activeInputFocusIndex = 'header_back';
-            } else if (['settings', 'admin'].includes(view)) {
-                if (this.settingsStep === 'auth') {
-                    this.activeKeypadIndex = 'header_back';
-                } else {
-                    this.dashboardFocus = 'header_back';
+            try {
+                const view = this.currentView;
+                if (['apps', 'applications'].includes(view)) {
+                    this.activeAppFocusIndex = 'header_back';
+                } else if (['language', 'languages'].includes(view)) {
+                    this.activeLangFocusIndex = 'header_back';
+                } else if (['input', 'inputs', 'hdmi'].includes(view)) {
+                    this.activeInputFocusIndex = 'header_back';
+                } else if (['settings', 'admin'].includes(view)) {
+                    if (this.settingsStep === 'auth') {
+                        this.activeKeypadIndex = 'header_back';
+                    } else {
+                        this.dashboardFocus = 'header_back';
+                    }
+                } else if (['flights', 'flight'].includes(view)) {
+                    this.flightFocusZone = 'header_back';
                 }
-            } else if (['flights', 'flight'].includes(view)) {
-                this.flightFocusZone = 'header_back';
+            } catch (e) {
+                console.warn('[TVApp] onHeaderBackFocus error:', e);
             }
         },
 
         onHeaderBackDown(e) {
-            if (e && typeof e.preventDefault === 'function') e.preventDefault();
-            const view = this.currentView;
+            try {
+                if (e && typeof e.preventDefault === 'function') e.preventDefault();
+                const view = this.currentView;
 
-            if (['apps', 'applications'].includes(view)) {
-                this.activeAppFocusIndex = 0;
-                if (typeof this.focusCurrentApp === 'function') this.focusCurrentApp();
-            } else if (['language', 'languages'].includes(view)) {
-                this.activeLangFocusIndex = 0;
-                if (typeof this.focusCurrentLanguage === 'function') this.focusCurrentLanguage();
-            } else if (['input', 'inputs', 'hdmi'].includes(view)) {
-                if (typeof this.focusCurrentInputPort === 'function') this.focusCurrentInputPort();
-            } else if (['settings', 'admin'].includes(view)) {
-                if (this.settingsStep === 'auth') {
-                    this.activeKeypadIndex = 0;
-                    if (typeof this.focusCurrentKeypadBtn === 'function') this.focusCurrentKeypadBtn();
-                } else {
-                    const selIdx = (this.availableTvPorts && this.liveTvSelectedPort) ? this.availableTvPorts.indexOf(this.liveTvSelectedPort) : 0;
-                    this.dashboardFocus = 'port_' + (selIdx >= 0 ? selIdx : 0);
-                    if (typeof this.focusCurrentDashboardElement === 'function') {
-                        this.focusCurrentDashboardElement();
+                if (['apps', 'applications'].includes(view)) {
+                    this.activeAppFocusIndex = 0;
+                    if (typeof this.focusCurrentApp === 'function') this.focusCurrentApp();
+                } else if (['language', 'languages'].includes(view)) {
+                    this.activeLangFocusIndex = 0;
+                    if (typeof this.focusCurrentLanguage === 'function') this.focusCurrentLanguage();
+                } else if (['input', 'inputs', 'hdmi'].includes(view)) {
+                    if (typeof this.focusCurrentInputPort === 'function') this.focusCurrentInputPort();
+                } else if (['settings', 'admin'].includes(view)) {
+                    if (this.settingsStep === 'auth') {
+                        this.activeKeypadIndex = 0;
+                        if (typeof this.focusCurrentKeypadBtn === 'function') this.focusCurrentKeypadBtn();
                     } else {
-                        document.getElementById(`settings_port_${selIdx >= 0 ? selIdx : 0}`)?.focus();
+                        const selIdx = (this.availableTvPorts && this.liveTvSelectedPort) ? this.availableTvPorts.indexOf(this.liveTvSelectedPort) : 0;
+                        this.dashboardFocus = 'port_' + (selIdx >= 0 ? selIdx : 0);
+                        if (typeof this.focusCurrentDashboardElement === 'function') {
+                            this.focusCurrentDashboardElement();
+                        } else {
+                            document.getElementById(`settings_port_${selIdx >= 0 ? selIdx : 0}`)?.focus();
+                        }
                     }
+                } else if (view === 'weather') {
+                    document.getElementById('tv-weather-refresh-btn')?.focus();
+                } else if (['flights', 'flight'].includes(view)) {
+                    document.getElementById('tv-header-back-btn')?.blur();
+                    this.flightFocusZone = 'header';
+                    this.flightFocusIndex = this.secondaryAirportData ? 2 : 0;
+                } else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(view)) {
+                    document.getElementById('tv-header-back-btn')?.blur();
+                    this.scrollInfoPanel(150);
+                } else {
+                    if (document.activeElement?.blur) document.activeElement.blur();
+                    TVRemoteManager.navigateSpatial('down');
                 }
-            } else if (view === 'weather') {
-                document.getElementById('tv-weather-refresh-btn')?.focus();
-            } else if (['flights', 'flight'].includes(view)) {
-                document.getElementById('tv-header-back-btn')?.blur();
-                this.flightFocusZone = 'header';
-                this.flightFocusIndex = this.secondaryAirportData ? 2 : 0;
-            } else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(view)) {
-                document.getElementById('tv-header-back-btn')?.blur();
-                this.scrollInfoPanel(150);
-            } else {
-                if (document.activeElement?.blur) document.activeElement.blur();
-                TVRemoteManager.navigateSpatial('down');
+            } catch (err) {
+                console.warn('[TVApp] onHeaderBackDown error:', err);
             }
         },
 
         // --- INFO PANEL CONTROLLER ---
         getInfoPanelTitle() {
-            if (this.currentView === 'hotel_info') return this.t('icons.hotel_info', 'HOTEL INFORMATION').toUpperCase();
-            if (this.currentView === 'room_info') return this.t('icons.room_info', 'ROOM INFORMATION').toUpperCase();
-            if (this.currentView === 'amenities') return this.t('icons.amenities', 'AMENITIES').toUpperCase();
-            if (['our_city', 'ourcity'].includes(this.currentView)) return this.t('icons.our_city', 'OUR CITY').toUpperCase();
-            return this.t('hotel_info', 'INFORMATION').toUpperCase();
+            try {
+                if (this.currentView === 'hotel_info') return this.t('icons.hotel_info', 'HOTEL INFORMATION').toUpperCase();
+                if (this.currentView === 'room_info') return this.t('icons.room_info', 'ROOM INFORMATION').toUpperCase();
+                if (this.currentView === 'amenities') return this.t('icons.amenities', 'AMENITIES').toUpperCase();
+                if (['our_city', 'ourcity'].includes(this.currentView)) return this.t('icons.our_city', 'OUR CITY').toUpperCase();
+                return this.t('hotel_info', 'INFORMATION').toUpperCase();
+            } catch (e) {
+                return 'INFORMATION';
+            }
         },
 
         getInfoList() {
-            if (this.currentView === 'hotel_info') {
-                const list = Array.isArray(this.hotelData.hotel_info) ? this.hotelData.hotel_info : [];
-                if (list.length > 0) {
+            try {
+                if (this.currentView === 'hotel_info') {
+                    const list = Array.isArray(this.hotelData?.hotel_info) ? this.hotelData.hotel_info : [];
+                    if (list.length > 0) {
+                        return list.map(item => ({
+                            title: item.title || '', description: item.description || '',
+                            image: item.image_url || item.url || item.image || '', features: Array.isArray(item.features) ? item.features : []
+                        }));
+                    }
+                    const h = this.hotelData?.hotel || {};
+                    const media = h.media || {};
+                    const images = (Array.isArray(media.hotel_images) && media.hotel_images.length > 0)
+                        ? media.hotel_images : (Array.isArray(media.slider_images) && media.slider_images.length > 0)
+                            ? media.slider_images : (media.cover_image ? [media.cover_image] : []);
+
+                    return images.map(img => (typeof img === 'object' && img !== null)
+                        ? { title: img.title || h.hotel_name || '', description: img.description || h.description || '', image: img.image_url || img.url || '', features: Array.isArray(img.features) ? img.features : [] }
+                        : { title: h.hotel_name || '', description: h.description || '', image: img || '', features: [] }
+                    );
+                }
+                if (this.currentView === 'room_info') {
+                    const list = Array.isArray(this.hotelData?.room_info) ? this.hotelData.room_info : [];
                     return list.map(item => ({
                         title: item.title || '', description: item.description || '',
-                        image: item.image_url || item.url || item.image || '', features: Array.isArray(item.features) ? item.features : []
+                        image: item.image_url || item.url || item.image || '', specifications: Array.isArray(item.specifications) ? item.specifications : []
                     }));
                 }
-                const h = this.hotelData.hotel || {};
-                const media = h.media || {};
-                const images = (Array.isArray(media.hotel_images) && media.hotel_images.length > 0)
-                    ? media.hotel_images : (Array.isArray(media.slider_images) && media.slider_images.length > 0)
-                        ? media.slider_images : (media.cover_image ? [media.cover_image] : []);
-
-                return images.map(img => (typeof img === 'object' && img !== null)
-                    ? { title: img.title || h.hotel_name || '', description: img.description || h.description || '', image: img.image_url || img.url || '', features: Array.isArray(img.features) ? img.features : [] }
-                    : { title: h.hotel_name || '', description: h.description || '', image: img || '', features: [] }
-                );
+                if (this.currentView === 'amenities') {
+                    const list = Array.isArray(this.hotelData?.amenities) ? this.hotelData.amenities : [];
+                    return list.map(item => ({ title: item.title || '', description: item.description || '', image: item.image_url || item.url || item.image || '' }));
+                }
+                if (['our_city', 'ourcity'].includes(this.currentView)) {
+                    const list = Array.isArray(this.hotelData?.our_city) ? this.hotelData.our_city : [];
+                    return list.map(item => ({
+                        title: item.title || item.name || '',
+                        description: item.description || '',
+                        image: item.image_url || item.url || item.image || '',
+                        attractions: Array.isArray(item.attractions) ? item.attractions : (Array.isArray(item.features) ? item.features : [])
+                    }));
+                }
+                return [];
+            } catch (e) {
+                console.warn('[TVApp] getInfoList error:', e);
+                return [];
             }
-            if (this.currentView === 'room_info') {
-                const list = Array.isArray(this.hotelData.room_info) ? this.hotelData.room_info : [];
-                return list.map(item => ({
-                    title: item.title || '', description: item.description || '',
-                    image: item.image_url || item.url || item.image || '', specifications: Array.isArray(item.specifications) ? item.specifications : []
-                }));
-            }
-            if (this.currentView === 'amenities') {
-                const list = Array.isArray(this.hotelData.amenities) ? this.hotelData.amenities : [];
-                return list.map(item => ({ title: item.title || '', description: item.description || '', image: item.image_url || item.url || item.image || '' }));
-            }
-            if (['our_city', 'ourcity'].includes(this.currentView)) {
-                const list = Array.isArray(this.hotelData.our_city) ? this.hotelData.our_city : [];
-                return list.map(item => ({
-                    title: item.title || item.name || '',
-                    description: item.description || '',
-                    image: item.image_url || item.url || item.image || '',
-                    attractions: Array.isArray(item.attractions) ? item.attractions : (Array.isArray(item.features) ? item.features : [])
-                }));
-            }
-            return [];
         },
 
         getInfoImages() {
-            return this.getInfoList().map(item => item.image);
+            try {
+                return this.getInfoList().map(item => item.image);
+            } catch (e) {
+                return [];
+            }
         },
 
         getCurrentInfoItem() {
-            const list = this.getInfoList();
-            if (!list || list.length === 0) return { title: '', description: '', features: [], specifications: [], attractions: [] };
-            return list[Math.min(this.infoSlideIndex, list.length - 1)] || list[0];
+            try {
+                const list = this.getInfoList();
+                if (!list || list.length === 0) return { title: '', description: '', features: [], specifications: [], attractions: [] };
+                return list[Math.min(this.infoSlideIndex, list.length - 1)] || list[0];
+            } catch (e) {
+                return { title: '', description: '', features: [], specifications: [], attractions: [] };
+            }
         },
 
         changeInfoSlide(dir) {
-            const total = this.getInfoImages().length;
-            if (total <= 1) return;
-            this.infoSlideIndex = (this.infoSlideIndex + dir + total) % total;
-            this.resetInfoScroll();
-            this.startInfoAutoSlide();
+            try {
+                const total = this.getInfoImages().length;
+                if (total <= 1) return;
+                this.infoSlideIndex = (this.infoSlideIndex + dir + total) % total;
+                this.resetInfoScroll();
+                this.startInfoAutoSlide();
+            } catch (e) {
+                console.warn('[TVApp] changeInfoSlide error:', e);
+            }
         },
 
         resetInfoScroll() {
-            this.$nextTick(() => {
-                document.getElementById('info-description-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+            try {
+                const nextTick = (typeof this.$nextTick === 'function') ? this.$nextTick.bind(this) : (fn) => setTimeout(fn, 0);
+                nextTick(() => {
+                    try {
+                        document.getElementById('info-description-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+                    } catch (_) {}
+                });
+            } catch (e) {
+                console.warn('[TVApp] resetInfoScroll error:', e);
+            }
         },
 
         scrollInfoPanel(delta) {
-            document.getElementById('info-description-scroll')?.scrollBy({ top: delta, behavior: 'smooth' });
+            try {
+                document.getElementById('info-description-scroll')?.scrollBy({ top: delta, behavior: 'smooth' });
+            } catch (e) {
+                console.warn('[TVApp] scrollInfoPanel error:', e);
+            }
         },
 
         startInfoAutoSlide() {
-            this.stopInfoAutoSlide();
-            this.infoSlideTimer = setInterval(() => {
-                const total = this.getInfoImages().length;
-                if (total > 1) {
-                    this.infoSlideIndex = (this.infoSlideIndex + 1) % total;
-                    this.resetInfoScroll();
-                }
-            }, 6000);
+            try {
+                this.stopInfoAutoSlide();
+                this.infoSlideTimer = setInterval(() => {
+                    try {
+                        const total = this.getInfoImages().length;
+                        if (total > 1) {
+                            this.infoSlideIndex = (this.infoSlideIndex + 1) % total;
+                            this.resetInfoScroll();
+                        }
+                    } catch (_) {}
+                }, 6000);
+            } catch (e) {
+                console.warn('[TVApp] startInfoAutoSlide error:', e);
+            }
         },
 
         stopInfoAutoSlide() {
-            if (this.infoSlideTimer) {
-                clearInterval(this.infoSlideTimer);
-                this.infoSlideTimer = null;
+            try {
+                if (this.infoSlideTimer) {
+                    clearInterval(this.infoSlideTimer);
+                    this.infoSlideTimer = null;
+                }
+            } catch (e) {
+                console.warn('[TVApp] stopInfoAutoSlide error:', e);
             }
         },
 
         // --- 2D GRID NAVIGATION (LANGUAGES MODAL) ---
         handleLanguagesGridNavigation(e) {
-            const total = this.availableLanguages.length;
-            const cols = 3;
+            try {
+                const total = this.availableLanguages.length;
+                const cols = 3;
 
-            if (TVRemoteManager.matches(e, 'LEFT')) {
-                e.preventDefault();
-                this.justSelectedLang = false;
-                if (typeof this.activeLangFocusIndex === 'number') {
-                    if (this.activeLangFocusIndex % cols > 0) { this.activeLangFocusIndex -= 1; this.focusCurrentLanguage(); }
-                } else if (this.activeLangFocusIndex === 'cancel') {
-                    this.activeLangFocusIndex = 'apply'; this.focusCurrentLanguage();
-                }
-                return true;
-            }
-            if (TVRemoteManager.matches(e, 'RIGHT')) {
-                e.preventDefault();
-                this.justSelectedLang = false;
-                if (typeof this.activeLangFocusIndex === 'number') {
-                    if ((this.activeLangFocusIndex % cols < cols - 1) && this.activeLangFocusIndex + 1 < total) {
-                        this.activeLangFocusIndex += 1; this.focusCurrentLanguage();
+                if (TVRemoteManager.matches(e, 'LEFT')) {
+                    e.preventDefault();
+                    this.justSelectedLang = false;
+                    if (typeof this.activeLangFocusIndex === 'number') {
+                        if (this.activeLangFocusIndex % cols > 0) { this.activeLangFocusIndex -= 1; this.focusCurrentLanguage(); }
+                    } else if (this.activeLangFocusIndex === 'cancel') {
+                        this.activeLangFocusIndex = 'apply'; this.focusCurrentLanguage();
                     }
-                } else if (this.activeLangFocusIndex === 'apply') {
-                    this.activeLangFocusIndex = 'cancel'; this.focusCurrentLanguage();
+                    return true;
                 }
-                return true;
-            }
-            if (TVRemoteManager.matches(e, 'UP')) {
-                e.preventDefault();
-                this.justSelectedLang = false;
-                if (typeof this.activeLangFocusIndex === 'number') {
-                    if (Math.floor(this.activeLangFocusIndex / cols) > 0) {
-                        this.activeLangFocusIndex -= cols; this.focusCurrentLanguage();
+                if (TVRemoteManager.matches(e, 'RIGHT')) {
+                    e.preventDefault();
+                    this.justSelectedLang = false;
+                    if (typeof this.activeLangFocusIndex === 'number') {
+                        if ((this.activeLangFocusIndex % cols < cols - 1) && this.activeLangFocusIndex + 1 < total) {
+                            this.activeLangFocusIndex += 1; this.focusCurrentLanguage();
+                        }
+                    } else if (this.activeLangFocusIndex === 'apply') {
+                        this.activeLangFocusIndex = 'cancel'; this.focusCurrentLanguage();
+                    }
+                    return true;
+                }
+                if (TVRemoteManager.matches(e, 'UP')) {
+                    e.preventDefault();
+                    this.justSelectedLang = false;
+                    if (typeof this.activeLangFocusIndex === 'number') {
+                        if (Math.floor(this.activeLangFocusIndex / cols) > 0) {
+                            this.activeLangFocusIndex -= cols; this.focusCurrentLanguage();
+                        } else {
+                            document.getElementById('tv-header-back-btn')?.focus();
+                        }
+                    } else if (this.activeLangFocusIndex === 'apply' || this.activeLangFocusIndex === 'cancel') {
+                        const selIdx = this.availableLanguages.findIndex(l => l.file === this.selectedLangFile);
+                        this.activeLangFocusIndex = selIdx >= 0 ? selIdx : (total - 1);
+                        this.focusCurrentLanguage();
+                    }
+                    return true;
+                }
+                if (TVRemoteManager.matches(e, 'DOWN')) {
+                    e.preventDefault();
+                    if (document.activeElement === document.getElementById('tv-header-back-btn')) {
+                        document.getElementById('tv-header-back-btn')?.blur();
+                        this.activeLangFocusIndex = 0; this.focusCurrentLanguage(); return true;
+                    }
+                    if (this.justSelectedLang) {
+                        this.justSelectedLang = false; this.activeLangFocusIndex = 'apply'; this.focusCurrentLanguage(); return true;
+                    }
+                    if (typeof this.activeLangFocusIndex === 'number') {
+                        if (this.activeLangFocusIndex + cols < total) this.activeLangFocusIndex += cols;
+                        else this.activeLangFocusIndex = 'apply';
+                        this.focusCurrentLanguage();
+                    }
+                    return true;
+                }
+                if (TVRemoteManager.matches(e, 'ENTER')) {
+                    e.preventDefault();
+                    if (typeof this.activeLangFocusIndex === 'number') {
+                        this.selectedLangFile = this.availableLanguages[this.activeLangFocusIndex].file;
+                        this.justSelectedLang = true;
+                    } else if (this.activeLangFocusIndex === 'apply') {
+                        this.applyLanguage();
+                    } else if (this.activeLangFocusIndex === 'cancel') {
+                        this.goBack();
                     } else {
-                        document.getElementById('tv-header-back-btn')?.focus();
+                        document.activeElement?.click?.();
                     }
-                } else if (this.activeLangFocusIndex === 'apply' || this.activeLangFocusIndex === 'cancel') {
-                    const selIdx = this.availableLanguages.findIndex(l => l.file === this.selectedLangFile);
-                    this.activeLangFocusIndex = selIdx >= 0 ? selIdx : (total - 1);
-                    this.focusCurrentLanguage();
+                    return true;
                 }
-                return true;
+                return false;
+            } catch (err) {
+                console.warn('[TVApp] handleLanguagesGridNavigation error:', err);
+                return false;
             }
-            if (TVRemoteManager.matches(e, 'DOWN')) {
-                e.preventDefault();
-                if (document.activeElement === document.getElementById('tv-header-back-btn')) {
-                    document.getElementById('tv-header-back-btn')?.blur();
-                    this.activeLangFocusIndex = 0; this.focusCurrentLanguage(); return true;
-                }
-                if (this.justSelectedLang) {
-                    this.justSelectedLang = false; this.activeLangFocusIndex = 'apply'; this.focusCurrentLanguage(); return true;
-                }
-                if (typeof this.activeLangFocusIndex === 'number') {
-                    if (this.activeLangFocusIndex + cols < total) this.activeLangFocusIndex += cols;
-                    else this.activeLangFocusIndex = 'apply';
-                    this.focusCurrentLanguage();
-                }
-                return true;
-            }
-            if (TVRemoteManager.matches(e, 'ENTER')) {
-                e.preventDefault();
-                if (typeof this.activeLangFocusIndex === 'number') {
-                    this.selectedLangFile = this.availableLanguages[this.activeLangFocusIndex].file;
-                    this.justSelectedLang = true;
-                } else if (this.activeLangFocusIndex === 'apply') {
-                    this.applyLanguage();
-                } else if (this.activeLangFocusIndex === 'cancel') {
-                    this.goBack();
-                } else {
-                    document.activeElement?.click?.();
-                }
-                return true;
-            }
-            return false;
         },
 
         // --- GLOBAL REMOTE EVENT DISPATCHER ---
         handleGlobalKeys(e) {
-            const now = Date.now();
-            const isDirection = TVRemoteManager.matches(e, 'LEFT') || TVRemoteManager.matches(e, 'RIGHT') || TVRemoteManager.matches(e, 'UP') || TVRemoteManager.matches(e, 'DOWN');
-            const isAction = TVRemoteManager.matches(e, 'ENTER') || TVRemoteManager.matches(e, 'BACK') || TVRemoteManager.matches(e, 'HOME') || TVRemoteManager.matches(e, 'EXIT');
+            try {
+                const now = Date.now();
+                const isDirection = TVRemoteManager.matches(e, 'LEFT') || TVRemoteManager.matches(e, 'RIGHT') || TVRemoteManager.matches(e, 'UP') || TVRemoteManager.matches(e, 'DOWN');
+                const isAction = TVRemoteManager.matches(e, 'ENTER') || TVRemoteManager.matches(e, 'BACK') || TVRemoteManager.matches(e, 'HOME') || TVRemoteManager.matches(e, 'EXIT');
 
-            if (isDirection) {
-                if (now - this.lastNavTime < this.navThrottleMs) { e.preventDefault(); return; }
-                this.lastNavTime = now;
-            }
-            if (isAction) {
-                if (now - this.lastActionTime < this.actionThrottleMs) { e.preventDefault(); return; }
-                this.lastActionTime = now;
-            }
-
-            if (['settings', 'admin'].includes(this.currentView)) {
-                if (this.handleSettingsKeyNavigation(e)) return;
-            }
-
-            if (['language', 'languages'].includes(this.currentView)) {
-                if (this.handleLanguagesGridNavigation(e)) return;
-            }
-
-            if (['apps', 'applications'].includes(this.currentView)) {
-                if (this.handleApplicationsGridNavigation(e)) return;
-            }
-
-            if (['input', 'inputs', 'hdmi'].includes(this.currentView)) {
-                if (this.handleInputGridNavigation(e)) return;
-            }
-
-            if (['flights', 'flight'].includes(this.currentView)) {
-                if (typeof this.handleFlightKeyNavigation === 'function' && this.handleFlightKeyNavigation(e)) return;
-            }
-
-            if (TVRemoteManager.matches(e, 'BACK')) { e.preventDefault(); this.goBack(); return; }
-            if (TVRemoteManager.matches(e, 'HOME')) {
-                e.preventDefault(); this.stopInfoAutoSlide();
-                if (document.activeElement?.blur) document.activeElement.blur();
-                this.currentView = 'home'; this.menuStack = []; this.currentMenuList = this.menuItems; this.activeMenuIndex = 0;
-                return;
-            }
-
-            if (TVRemoteManager.matches(e, 'LEFT')) {
-                e.preventDefault();
-                if (this.currentView === 'home') this.slideMenu(-1);
-                else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) this.changeInfoSlide(-1);
-                else TVRemoteManager.navigateSpatial('left');
-                return;
-            }
-            if (TVRemoteManager.matches(e, 'RIGHT')) {
-                e.preventDefault();
-                if (this.currentView === 'home') this.slideMenu(1);
-                else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) this.changeInfoSlide(1);
-                else TVRemoteManager.navigateSpatial('right');
-                return;
-            }
-            if (TVRemoteManager.matches(e, 'UP')) {
-                e.preventDefault();
-                if (this.currentView === 'home') {
-                    const cur = this.currentMenuList[this.activeMenuIndex];
-                    if (cur) this.selectMenuItem(cur);
-                } else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) {
-                    const el = document.getElementById('info-description-scroll');
-                    const backBtn = document.getElementById('tv-header-back-btn');
-                    if (el && el.scrollTop > 20) this.scrollInfoPanel(-150);
-                    else if (backBtn) backBtn.focus();
-                } else {
-                    TVRemoteManager.navigateSpatial('up');
+                if (isDirection) {
+                    if (now - this.lastNavTime < this.navThrottleMs) { e.preventDefault(); return; }
+                    this.lastNavTime = now;
                 }
-                return;
-            }
-            if (TVRemoteManager.matches(e, 'DOWN')) {
-                e.preventDefault();
-                if (this.currentView === 'home') {
-                    if (this.menuStack.length > 0) this.goBack();
-                } else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) {
-                    const backBtn = document.getElementById('tv-header-back-btn');
-                    if (document.activeElement === backBtn) backBtn.blur();
-                    this.scrollInfoPanel(150);
-                } else {
-                    TVRemoteManager.navigateSpatial('down');
+                if (isAction) {
+                    if (now - this.lastActionTime < this.actionThrottleMs) { e.preventDefault(); return; }
+                    this.lastActionTime = now;
                 }
-                return;
-            }
-            if (TVRemoteManager.matches(e, 'ENTER')) {
-                e.preventDefault();
-                if (this.currentView === 'home') {
-                    const cur = this.currentMenuList[this.activeMenuIndex];
-                    if (cur) this.selectMenuItem(cur);
-                } else {
-                    const el = document.activeElement;
-                    if (el && el !== document.body && typeof el.click === 'function') el.click();
-                }
-                return;
-            }
 
-            const digit = TVRemoteManager.getDigit(e);
-            if (digit !== null && typeof window.onTVNumericInput === 'function') window.onTVNumericInput(digit);
+                if (['settings', 'admin'].includes(this.currentView)) {
+                    if (this.handleSettingsKeyNavigation(e)) return;
+                }
+
+                if (['language', 'languages'].includes(this.currentView)) {
+                    if (this.handleLanguagesGridNavigation(e)) return;
+                }
+
+                if (['apps', 'applications'].includes(this.currentView)) {
+                    if (this.handleApplicationsGridNavigation(e)) return;
+                }
+
+                if (['input', 'inputs', 'hdmi'].includes(this.currentView)) {
+                    if (this.handleInputGridNavigation(e)) return;
+                }
+
+                if (['flights', 'flight'].includes(this.currentView)) {
+                    if (typeof this.handleFlightKeyNavigation === 'function' && this.handleFlightKeyNavigation(e)) return;
+                }
+
+                if (TVRemoteManager.matches(e, 'BACK')) { e.preventDefault(); this.goBack(); return; }
+                if (TVRemoteManager.matches(e, 'HOME')) {
+                    e.preventDefault(); this.stopInfoAutoSlide();
+                    if (document.activeElement?.blur) document.activeElement.blur();
+                    this.currentView = 'home'; this.menuStack = []; this.currentMenuList = this.menuItems; this.activeMenuIndex = 0;
+                    return;
+                }
+
+                if (TVRemoteManager.matches(e, 'LEFT')) {
+                    e.preventDefault();
+                    if (this.currentView === 'home') this.slideMenu(-1);
+                    else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) this.changeInfoSlide(-1);
+                    else TVRemoteManager.navigateSpatial('left');
+                    return;
+                }
+                if (TVRemoteManager.matches(e, 'RIGHT')) {
+                    e.preventDefault();
+                    if (this.currentView === 'home') this.slideMenu(1);
+                    else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) this.changeInfoSlide(1);
+                    else TVRemoteManager.navigateSpatial('right');
+                    return;
+                }
+                if (TVRemoteManager.matches(e, 'UP')) {
+                    e.preventDefault();
+                    if (this.currentView === 'home') {
+                        const cur = this.currentMenuList[this.activeMenuIndex];
+                        if (cur) this.selectMenuItem(cur);
+                    } else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) {
+                        const el = document.getElementById('info-description-scroll');
+                        const backBtn = document.getElementById('tv-header-back-btn');
+                        if (el && el.scrollTop > 20) this.scrollInfoPanel(-150);
+                        else if (backBtn) backBtn.focus();
+                    } else {
+                        TVRemoteManager.navigateSpatial('up');
+                    }
+                    return;
+                }
+                if (TVRemoteManager.matches(e, 'DOWN')) {
+                    e.preventDefault();
+                    if (this.currentView === 'home') {
+                        if (this.menuStack.length > 0) this.goBack();
+                    } else if (['hotel_info', 'room_info', 'amenities', 'our_city', 'ourcity'].includes(this.currentView)) {
+                        const backBtn = document.getElementById('tv-header-back-btn');
+                        if (document.activeElement === backBtn) backBtn.blur();
+                        this.scrollInfoPanel(150);
+                    } else {
+                        TVRemoteManager.navigateSpatial('down');
+                    }
+                    return;
+                }
+                if (TVRemoteManager.matches(e, 'ENTER')) {
+                    e.preventDefault();
+                    if (this.currentView === 'home') {
+                        const cur = this.currentMenuList[this.activeMenuIndex];
+                        if (cur) this.selectMenuItem(cur);
+                    } else {
+                        const el = document.activeElement;
+                        if (el && el !== document.body && typeof el.click === 'function') el.click();
+                    }
+                    return;
+                }
+
+                const digit = TVRemoteManager.getDigit(e);
+                if (digit !== null && typeof window.onTVNumericInput === 'function') window.onTVNumericInput(digit);
+            } catch (err) {
+                console.warn('[TVApp] handleGlobalKeys error:', err);
+            }
         },
 
         // --- BACKGROUND SLIDESHOW ---
         startSlider() {
-            if (this.timerId) clearInterval(this.timerId);
-            if (this.sliderImages.length > 1) {
-                this.timerId = setInterval(() => {
-                    this.activeSlideIndex = (this.activeSlideIndex + 1) % this.sliderImages.length;
-                }, this.slideIntervalMs);
+            try {
+                if (this.timerId) clearInterval(this.timerId);
+                if (this.sliderImages.length > 1) {
+                    this.timerId = setInterval(() => {
+                        try {
+                            this.activeSlideIndex = (this.activeSlideIndex + 1) % this.sliderImages.length;
+                        } catch (_) {}
+                    }, this.slideIntervalMs);
+                }
+            } catch (e) {
+                console.warn('[TVApp] startSlider error:', e);
             }
         }
     };
 }
 
 // Global Native Flutter Bridge Hooks
-window.triggerTVBack = () => window.tvAppInstance?.goBack?.();
+window.triggerTVBack = () => {
+    try {
+        window.tvAppInstance?.goBack?.();
+    } catch (e) {
+        console.warn('[Global] triggerTVBack error:', e);
+    }
+};
+
 window.triggerTVHome = () => {
-    if (window.tvAppInstance) {
-        window.tvAppInstance.currentView = 'home';
-        window.tvAppInstance.menuStack = [];
-        window.tvAppInstance.currentMenuList = window.tvAppInstance.menuItems;
-        window.tvAppInstance.activeMenuIndex = 0;
+    try {
+        if (window.tvAppInstance) {
+            window.tvAppInstance.currentView = 'home';
+            window.tvAppInstance.menuStack = [];
+            window.tvAppInstance.currentMenuList = window.tvAppInstance.menuItems;
+            window.tvAppInstance.activeMenuIndex = 0;
+        }
+    } catch (e) {
+        console.warn('[Global] triggerTVHome error:', e);
     }
 };

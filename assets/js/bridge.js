@@ -52,42 +52,58 @@
      */
     function callNative(method, args, timeoutMs) {
         return new Promise((resolve, reject) => {
-            if (!isFlutterAvailable()) {
-                return reject(new Error(`FlutterBridge not available (Browser mode: ${method})`));
-            }
-
-            const id = generateCallId();
-            const timeout = timeoutMs || 10000;
-
-            const timer = setTimeout(() => {
-                if (PENDING_CALLS.has(id)) {
-                    PENDING_CALLS.delete(id);
-                    reject(new Error(`Bridge call '${method}' timed out after ${timeout / 1000}s`));
-                }
-            }, timeout);
-
-            PENDING_CALLS.set(id, {
-                resolve: (result) => {
-                    clearTimeout(timer);
-                    resolve(result);
-                },
-                reject: (err) => {
-                    clearTimeout(timer);
-                    reject(err);
-                }
-            });
-
             try {
-                const payload = JSON.stringify({
-                    method: method,
-                    args: Array.isArray(args) ? args : (args !== undefined ? [args] : []),
-                    id: id
+                if (!isFlutterAvailable()) {
+                    return reject(new Error(`FlutterBridge not available (Browser mode: ${method})`));
+                }
+
+                const id = generateCallId();
+                const timeout = timeoutMs || 10000;
+
+                const timer = setTimeout(() => {
+                    try {
+                        if (PENDING_CALLS.has(id)) {
+                            PENDING_CALLS.delete(id);
+                            reject(new Error(`Bridge call '${method}' timed out after ${timeout / 1000}s`));
+                        }
+                    } catch (timerErr) {
+                        reject(timerErr);
+                    }
+                }, timeout);
+
+                PENDING_CALLS.set(id, {
+                    resolve: (result) => {
+                        try {
+                            clearTimeout(timer);
+                            resolve(result);
+                        } catch (resErr) {
+                            reject(resErr);
+                        }
+                    },
+                    reject: (err) => {
+                        try {
+                            clearTimeout(timer);
+                            reject(err);
+                        } catch (rejErr) {
+                            reject(rejErr);
+                        }
+                    }
                 });
-                window.FlutterBridge.postMessage(payload);
-            } catch (postErr) {
-                clearTimeout(timer);
-                PENDING_CALLS.delete(id);
-                reject(postErr);
+
+                try {
+                    const payload = JSON.stringify({
+                        method: method,
+                        args: Array.isArray(args) ? args : (args !== undefined ? [args] : []),
+                        id: id
+                    });
+                    window.FlutterBridge.postMessage(payload);
+                } catch (postErr) {
+                    clearTimeout(timer);
+                    PENDING_CALLS.delete(id);
+                    reject(postErr);
+                }
+            } catch (outerErr) {
+                reject(outerErr);
             }
         });
     }
@@ -102,7 +118,11 @@
          * @returns {boolean}
          */
         isAvailable() {
-            return isFlutterAvailable();
+            try {
+                return isFlutterAvailable();
+            } catch (e) {
+                return false;
+            }
         },
 
         /**
@@ -149,7 +169,11 @@
          * @returns {Promise<Object>} Device hardware metadata
          */
         identifyDevice(ip) {
-            return callNative('identifyDevice', ip ? [ip] : []);
+            try {
+                return callNative('identifyDevice', ip ? [ip] : []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -158,7 +182,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         saveDeviceConfig(config) {
-            return callNative('saveDeviceConfig', [config]);
+            try {
+                return callNative('saveDeviceConfig', [config]);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -168,7 +196,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         saveRoomConfig(room, config) {
-            return callNative('saveRoomConfig', [room, config]);
+            try {
+                return callNative('saveRoomConfig', [room, config]);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -177,7 +209,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         saveConfiguration(config) {
-            return callNative('saveConfiguration', [config]);
+            try {
+                return callNative('saveConfiguration', [config]);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -186,7 +222,11 @@
          * @returns {Promise<Object|null>}
          */
         getDeviceConfig(serial) {
-            return callNative('getDeviceConfig', serial ? [serial] : []);
+            try {
+                return callNative('getDeviceConfig', serial ? [serial] : []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -195,7 +235,11 @@
          * @returns {Promise<Object|null>}
          */
         getRoomConfig(room) {
-            return callNative('getRoomConfig', [room]);
+            try {
+                return callNative('getRoomConfig', [room]);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -203,7 +247,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         clearConfig() {
-            return callNative('clearConfig', []);
+            try {
+                return callNative('clearConfig', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -212,7 +260,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         saveWeatherData(weatherData) {
-            return callNative('saveWeatherData', [weatherData]);
+            try {
+                return callNative('saveWeatherData', [weatherData]);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         // --------------------------------------------------------------------
@@ -225,7 +277,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         launchApp(packageName) {
-            return callNative('launchApp', [packageName]);
+            try {
+                return callNative('launchApp', [packageName]);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -234,7 +290,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         launchHdmi(model) {
-            return callNative('launchHdmi', [model]);
+            try {
+                return callNative('launchHdmi', [model]);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -243,7 +303,11 @@
          * @returns {Promise<Object>} { success: boolean, port: string }
          */
         launchLiveTv(port) {
-            return callNative('launchLiveTv', port ? [port] : []);
+            try {
+                return callNative('launchLiveTv', port ? [port] : []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -253,8 +317,12 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         launchIptv(packageName, configPath) {
-            const args = packageName ? [packageName, configPath || ''] : ['iptv', 'iptv/all.json'];
-            return callNative('launchIptv', args);
+            try {
+                const args = packageName ? [packageName, configPath || ''] : ['iptv', 'iptv/all.json'];
+                return callNative('launchIptv', args);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -263,32 +331,37 @@
          * @returns {Promise<Object>}
          */
         async launchDefaultLiveTv(fallbackPort = 'HDMI 1') {
-            let pref = localStorage.getItem('last_tv_input_port');
-            if (!pref && this.getSelectedLiveTvPort && isFlutterAvailable()) {
-                try {
-                    const res = await this.getSelectedLiveTvPort();
-                    pref = res?.selectedPort || res?.port;
-                } catch (_) {}
-            }
-            const target = pref || fallbackPort;
-            console.log('[Bridge] Launching Default Live TV target:', target);
-
-            if (!isFlutterAvailable()) {
-                console.log('[Bridge] Browser preview: launchDefaultLiveTv simulated for', target);
-                return Promise.resolve({ success: true, mode: 'browser_simulated', target: target });
-            }
-
-            if (target.startsWith('APP:')) {
-                const pkg = target.replace(/^APP:/i, '').trim();
-                return this.launchApp(pkg);
-            } else if (target === 'IPTV') {
-                return this.launchIptv('iptv', 'iptv/all.json');
-            } else {
-                try {
-                    return await this.launchHdmi(target);
-                } catch (e) {
-                    return await this.launchLiveTv(target);
+            try {
+                let pref = localStorage.getItem('last_tv_input_port');
+                if (!pref && this.getSelectedLiveTvPort && isFlutterAvailable()) {
+                    try {
+                        const res = await this.getSelectedLiveTvPort();
+                        pref = res?.selectedPort || res?.port;
+                    } catch (_) {}
                 }
+                const target = pref || fallbackPort;
+                console.log('[Bridge] Launching Default Live TV target:', target);
+
+                if (!isFlutterAvailable()) {
+                    console.log('[Bridge] Browser preview: launchDefaultLiveTv simulated for', target);
+                    return { success: true, mode: 'browser_simulated', target: target };
+                }
+
+                if (target.startsWith('APP:') || target.includes('.') || (!target.toUpperCase().startsWith('HDMI') && target.toUpperCase() !== 'IPTV')) {
+                    const pkg = target.replace(/^APP:/i, '').trim();
+                    return await this.launchApp(pkg);
+                } else if (target === 'IPTV') {
+                    return await this.launchIptv('iptv', 'iptv/all.json');
+                } else {
+                    try {
+                        return await this.launchHdmi(target);
+                    } catch (e) {
+                        return await this.launchLiveTv(target);
+                    }
+                }
+            } catch (err) {
+                console.warn('[Bridge] launchDefaultLiveTv error:', err);
+                return { success: false, error: err?.message || String(err) };
             }
         },
 
@@ -297,7 +370,11 @@
          * @returns {Promise<Array<Object>>} List of connected ports
          */
         getLiveTvInputs() {
-            return callNative('getLiveTvInputs', []);
+            try {
+                return callNative('getLiveTvInputs', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -305,7 +382,11 @@
          * @returns {Promise<Array<Object>|Object>}
          */
         getHdmiModels() {
-            return callNative('getHdmiModels', []);
+            try {
+                return callNative('getHdmiModels', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -313,23 +394,35 @@
          * @returns {Promise<Object>} { selectedPort: string, port: string }
          */
         getSelectedLiveTvPort() {
-            return callNative('getSelectedLiveTvPort', []);
+            try {
+                return callNative('getSelectedLiveTvPort', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
          * Save preferred Live TV input port
-         * @param {string} port - Port ID (e.g. "HDMI_1")
+         * @param {string} port - Port identifier / exact preference value
          * @returns {Promise<Object>} { success: boolean }
          */
         savePortPreference(port) {
-            return callNative('savePortPreference', [port]);
+            try {
+                if (!isFlutterAvailable()) {
+                    console.log('[Bridge] Browser preview: savePortPreference simulated with value:', port);
+                    return Promise.resolve({ success: true, mode: 'browser_simulated', port: port });
+                }
+                return callNative('savePortPreference', [port]);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
          * Alias for savePortPreference
          */
         saveLiveTvPort(port) {
-            return callNative('saveLiveTvPort', [port]);
+            return this.savePortPreference(port);
         },
 
         // --------------------------------------------------------------------
@@ -341,14 +434,18 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         openSettings() {
-            return callNative('openSettings', []);
+            try {
+                return callNative('openSettings', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
          * Alias for openSettings
          */
         openAndroidSettings() {
-            return callNative('openAndroidSettings', []);
+            return this.openSettings();
         },
 
         /**
@@ -356,7 +453,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         openWifiSettings() {
-            return callNative('openWifiSettings', []);
+            try {
+                return callNative('openWifiSettings', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -364,7 +465,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         launchCast() {
-            return callNative('launchCast', []);
+            try {
+                return callNative('launchCast', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -372,7 +477,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         refreshApp() {
-            return callNative('refreshApp', []);
+            try {
+                return callNative('refreshApp', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -380,7 +489,11 @@
          * @returns {Promise<boolean>} True if connected
          */
         checkInternet() {
-            return callNative('checkInternet', []);
+            try {
+                return callNative('checkInternet', []);
+            } catch (e) {
+                return Promise.resolve(navigator?.onLine ?? true);
+            }
         },
 
         /**
@@ -388,7 +501,11 @@
          * @returns {Promise<Object>} { connected: boolean, level: number, type: string }
          */
         getWifiSignalStrength() {
-            return callNative('getWifiSignalStrength', []);
+            try {
+                return callNative('getWifiSignalStrength', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -397,7 +514,11 @@
          * @returns {Promise<Object>} { success: boolean }
          */
         setLanguage(lang) {
-            return callNative('setLanguage', [lang]);
+            try {
+                return callNative('setLanguage', [lang]);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -405,7 +526,11 @@
          * @returns {Promise<Array<Object>>}
          */
         getLanguages() {
-            return callNative('getLanguages', []);
+            try {
+                return callNative('getLanguages', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -413,7 +538,11 @@
          * @returns {Promise<Object>}
          */
         getSystemInfo() {
-            return callNative('getSystemInfo', []);
+            try {
+                return callNative('getSystemInfo', []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -422,7 +551,11 @@
          * @returns {Promise<Object>} { success: boolean, data: Object }
          */
         getFlightData(airportCode) {
-            return callNative('getFlightData', airportCode ? [airportCode] : []);
+            try {
+                return callNative('getFlightData', airportCode ? [airportCode] : []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -431,7 +564,11 @@
          * @returns {Promise<Object>}
          */
         refreshFlightData(airportCode) {
-            return callNative('refreshFlightData', airportCode ? [airportCode] : []);
+            try {
+                return callNative('refreshFlightData', airportCode ? [airportCode] : []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         // --------------------------------------------------------------------
@@ -445,7 +582,11 @@
          * @returns {Promise<any>}
          */
         call(method, args) {
-            return callNative(method, args || []);
+            try {
+                return callNative(method, args || []);
+            } catch (e) {
+                return Promise.reject(e);
+            }
         },
 
         /**
@@ -501,32 +642,54 @@
 
     window.AndroidBridge = {
         getPictureList(category) {
-            return window.flutterBridge.getPictureList ? window.flutterBridge.getPictureList(category) : Promise.resolve([]);
+            try {
+                return window.flutterBridge.getPictureList ? window.flutterBridge.getPictureList(category) : Promise.resolve([]);
+            } catch (e) {
+                return Promise.resolve([]);
+            }
         },
         rotateImage(imagePath, degrees) {
-            return window.flutterBridge.rotateImage ? window.flutterBridge.rotateImage(imagePath, degrees) : Promise.resolve({});
+            try {
+                return window.flutterBridge.rotateImage ? window.flutterBridge.rotateImage(imagePath, degrees) : Promise.resolve({});
+            } catch (e) {
+                return Promise.resolve({});
+            }
         },
         hideLoading() {
-            if (window.FlutterBridge && window.FlutterBridge.postMessage) {
-                try {
+            try {
+                if (window.FlutterBridge && window.FlutterBridge.postMessage) {
                     window.FlutterBridge.postMessage(JSON.stringify({ method: 'hideLoading', args: [], id: 0 }));
-                } catch (_) { }
-            }
+                }
+            } catch (_) { }
         }
     };
 
     window.Android = {
         openAndroidSettings() {
-            return window.flutterBridge.openSettings();
+            try {
+                return window.flutterBridge.openSettings();
+            } catch (e) {
+                return Promise.resolve({ success: false });
+            }
         },
         openSettings() {
-            return window.flutterBridge.openSettings();
+            try {
+                return window.flutterBridge.openSettings();
+            } catch (e) {
+                return Promise.resolve({ success: false });
+            }
         },
         pictureListReady(jsonString) {
-            window.dispatchEvent(new CustomEvent('pictureListReady', { detail: jsonString }));
+            try {
+                window.dispatchEvent(new CustomEvent('pictureListReady', { detail: jsonString }));
+            } catch (e) {
+                console.warn('[Android] pictureListReady error:', e);
+            }
         },
         hideLoading() {
-            window.AndroidBridge.hideLoading();
+            try {
+                window.AndroidBridge.hideLoading();
+            } catch (_) {}
         }
     };
 
@@ -537,22 +700,34 @@
 // ============================================================================
 window.TVKeyInjector = {
     triggerBack: function () {
-        this.triggerKey(8, 'Backspace');
+        try {
+            this.triggerKey(8, 'Backspace');
+        } catch (e) {
+            console.warn('[TVKeyInjector] triggerBack error:', e);
+        }
     },
     triggerNumber: function (digit) {
-        var num = parseInt(digit, 10);
-        if (num >= 0 && num <= 9) {
-            this.triggerKey(48 + num, digit);
+        try {
+            var num = parseInt(digit, 10);
+            if (num >= 0 && num <= 9) {
+                this.triggerKey(48 + num, digit);
+            }
+        } catch (e) {
+            console.warn('[TVKeyInjector] triggerNumber error:', e);
         }
     },
     triggerKey: function (keyCode, keyName) {
-        var event = new KeyboardEvent('keydown', {
-            bubbles: true,
-            cancelable: true,
-            keyCode: keyCode,
-            which: keyCode,
-            key: keyName || ''
-        });
-        document.dispatchEvent(event);
+        try {
+            var event = new KeyboardEvent('keydown', {
+                bubbles: true,
+                cancelable: true,
+                keyCode: keyCode,
+                which: keyCode,
+                key: keyName || ''
+            });
+            document.dispatchEvent(event);
+        } catch (e) {
+            console.warn('[TVKeyInjector] triggerKey error:', e);
+        }
     }
 };
