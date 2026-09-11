@@ -70,8 +70,8 @@
                     <div :id="`input_port_${idx}`"
                          tabindex="0"
                          @click="selectInputPort(port)"
-                         @mouseenter="activeInputFocusIndex = idx; lastInputPortIndex = idx; document.getElementById('tv-header-back-btn')?.blur();"
-                         @focus="activeInputFocusIndex = idx; lastInputPortIndex = idx; document.getElementById('tv-header-back-btn')?.blur();"
+                         @mouseenter="activeInputFocusIndex = idx; lastInputPortIndex = idx; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
+                         @focus="activeInputFocusIndex = idx; lastInputPortIndex = idx; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                          class="group relative flex flex-col items-center justify-between cursor-pointer transition-all duration-300 outline-none select-none text-center"
                          :class="[
                              isCompactLayout() ? 'p-5 rounded-2xl min-h-[270px]' : 'p-7 rounded-3xl min-h-[350px]',

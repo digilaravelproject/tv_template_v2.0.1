@@ -51,10 +51,10 @@
 
             <template x-for="(app, idx) in getActiveOttList()" :key="app.id || idx">
                 <div @click="launchApp(app)"
-                     @mouseenter="activeAppFocusIndex = idx; lastAppCardIndex = idx; document.getElementById('tv-header-back-btn')?.blur();"
+                     @mouseenter="activeAppFocusIndex = idx; lastAppCardIndex = idx; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                      tabindex="0"
                      :id="`app_card_${idx}`"
-                     @focus="activeAppFocusIndex = idx; lastAppCardIndex = idx; document.getElementById('tv-header-back-btn')?.blur();"
+                     @focus="activeAppFocusIndex = idx; lastAppCardIndex = idx; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                      class="h-52 rounded-2xl flex flex-col items-center justify-between p-4 cursor-pointer transition-all duration-300 outline-none border text-center relative group select-none"
                      :class="{
                          'bg-gradient-to-b from-amber-500/25 via-[#181818] to-black border-2 border-amber-400 shadow-[0_0_35px_rgba(255,215,0,0.7),0_12px_28px_rgba(0,0,0,0.95)] scale-[1.05] z-30 ring-2 ring-amber-300': activeAppFocusIndex === idx,

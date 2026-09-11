@@ -35,21 +35,21 @@
                 <div class="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 space-x-1">
                     <button id="flight-focus-toggle_primary" 
                         @click="switchAirportSlot('primary')"
-                        @mouseenter="flightFocusZone = 'header'; flightFocusIndex = 0; document.getElementById('tv-header-back-btn')?.blur();"
+                        @mouseenter="flightFocusZone = 'header'; flightFocusIndex = 0; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                         class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer" :class="[
                                 activeAirportSlot === 'primary' ? 'bg-amber-400 text-black shadow-md font-black' : 'text-slate-300 hover:text-white',
                                 (flightFocusZone === 'header' && flightFocusIndex === 0) ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-black' : ''
                             ]">
-                        <span x-text="primaryAirportData?.iata_code || 'Primary'"></span>
+                        <span x-text="(primaryAirportData ? primaryAirportData.iata_code : "") || 'Primary'"></span>
                     </button>
                     <button id="flight-focus-toggle_secondary" 
                         @click="switchAirportSlot('secondary')"
-                        @mouseenter="flightFocusZone = 'header'; flightFocusIndex = 1; document.getElementById('tv-header-back-btn')?.blur();"
+                        @mouseenter="flightFocusZone = 'header'; flightFocusIndex = 1; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                         class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer" :class="[
                                 activeAirportSlot === 'secondary' ? 'bg-amber-400 text-black shadow-md font-black' : 'text-slate-300 hover:text-white',
                                 (flightFocusZone === 'header' && flightFocusIndex === 1) ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-black' : ''
                             ]">
-                        <span x-text="secondaryAirportData?.iata_code || 'Secondary'"></span>
+                        <span x-text="(secondaryAirportData ? secondaryAirportData.iata_code : "") || 'Secondary'"></span>
                     </button>
                 </div>
             </template>
@@ -65,8 +65,8 @@
             <!-- Manual Refresh Action Button (Crystal Clear Text & Dynamic Active Colors) -->
             <button id="flight-focus-btn_refresh" 
                 @click="refreshFlights()"
-                @mouseenter="flightFocusZone = 'header'; flightFocusIndex = (secondaryAirportData ? 2 : 0); document.getElementById('tv-header-back-btn')?.blur();"
-                @focus="flightFocusZone = 'header'; flightFocusIndex = (secondaryAirportData ? 2 : 0); document.getElementById('tv-header-back-btn')?.blur();"
+                @mouseenter="flightFocusZone = 'header'; flightFocusIndex = (secondaryAirportData ? 2 : 0); (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
+                @focus="flightFocusZone = 'header'; flightFocusIndex = (secondaryAirportData ? 2 : 0); (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                 class="px-5 py-2 rounded-xl border flex items-center space-x-2 transition-all cursor-pointer font-black text-xs tracking-wider uppercase shadow-md"
                 :class="[
                         (flightFocusZone === 'header' && ((secondaryAirportData && flightFocusIndex === 2) || (!secondaryAirportData && flightFocusIndex === 0))) 
@@ -96,7 +96,7 @@
                 <!-- Departures Tab -->
                 <button id="flight-focus-tab_departures" 
                     @click="switchFlightTab('departures')"
-                    @mouseenter="flightFocusZone = 'tabs'; flightFocusIndex = 0; document.getElementById('tv-header-back-btn')?.blur();"
+                    @mouseenter="flightFocusZone = 'tabs'; flightFocusIndex = 0; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                     class="px-6 py-2 rounded-2xl text-sm font-black tracking-wider uppercase transition-all flex items-center space-x-2.5 cursor-pointer"
                     :class="[
                             activeFlightTab === 'departures' ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-[0_0_25px_rgba(251,191,36,0.4)]' : 'bg-white/5 text-slate-300 hover:text-white border border-white/10',
@@ -112,7 +112,7 @@
                 <!-- Arrivals Tab -->
                 <button id="flight-focus-tab_arrivals" 
                     @click="switchFlightTab('arrivals')"
-                    @mouseenter="flightFocusZone = 'tabs'; flightFocusIndex = 1; document.getElementById('tv-header-back-btn')?.blur();"
+                    @mouseenter="flightFocusZone = 'tabs'; flightFocusIndex = 1; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                     class="px-6 py-2 rounded-2xl text-sm font-black tracking-wider uppercase transition-all flex items-center space-x-2.5 cursor-pointer"
                     :class="[
                             activeFlightTab === 'arrivals' ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-[0_0_25px_rgba(251,191,36,0.4)]' : 'bg-white/5 text-slate-300 hover:text-white border border-white/10',
@@ -164,7 +164,7 @@
                 <div class="space-y-1">
                     <template x-for="(flight, idx) in getPaginatedFlights()" :key="flight.flight_no + '_' + idx">
                         <div class="grid grid-cols-12 gap-4 h-[60px] items-center transition-all duration-150 rounded-xl px-4 cursor-pointer border-l-4 border-transparent"
-                            @mouseenter="flightFocusZone = 'rows'; flightFocusIndex = idx; document.getElementById('tv-header-back-btn')?.blur();"
+                            @mouseenter="flightFocusZone = 'rows'; flightFocusIndex = idx; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                             :class="{
                                  'bg-amber-400/20 !border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.25)]': (flightFocusZone === 'rows' && flightFocusIndex === idx),
                                  'hover:bg-white/[0.05] bg-white/[0.02]': !(flightFocusZone === 'rows' && flightFocusIndex === idx)

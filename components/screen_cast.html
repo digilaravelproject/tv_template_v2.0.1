@@ -120,7 +120,7 @@
                 Press <span class="text-amber-400 font-bold">BACK</span> on TV remote to return to Home screen
             </p>
             <div class="flex items-center gap-3">
-                <template x-if="hotelData?.device?.ip_address">
+                <template x-if="(hotelData && hotelData.device && hotelData.device.ip_address)">
                     <span class="text-[11px] font-mono text-slate-400">
                         IP: <strong class="text-amber-400" x-text="hotelData.device.ip_address"></strong>
                     </span>
