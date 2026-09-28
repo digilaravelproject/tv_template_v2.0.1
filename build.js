@@ -40,14 +40,14 @@ if (fs.existsSync(compDir)) {
         // Clean optional chaining inside HTML expressions
         content = content.replace(/document\.getElementById\('tv-header-back-btn'\)\?\.blur\(\)/g, "(document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur())");
         content = content.replace(/document\.getElementById\('tv-header-back-btn'\)\?\.focus\(\)/g, "(document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').focus())");
-        content = content.replace(/weatherData\.daily\[0\]\?\.sunrise/g, '(weatherData.daily && weatherData.daily[0] ? weatherData.daily[0].sunrise : "")');
-        content = content.replace(/weatherData\.daily\[0\]\?\.sunset/g, '(weatherData.daily && weatherData.daily[0] ? weatherData.daily[0].sunset : "")');
-        content = content.replace(/roomNo \|\| hotelData\?\.device\?\.room_no/g, 'roomNo || (hotelData && hotelData.device ? hotelData.device.room_no : "")');
+        content = content.replace(/weatherData\.daily\[0\]\?\.sunrise/g, "(weatherData.daily && weatherData.daily[0] ? weatherData.daily[0].sunrise : '')");
+        content = content.replace(/weatherData\.daily\[0\]\?\.sunset/g, "(weatherData.daily && weatherData.daily[0] ? weatherData.daily[0].sunset : '')");
+        content = content.replace(/roomNo \|\| hotelData\?\.device\?\.room_no/g, "roomNo || (hotelData && hotelData.device ? hotelData.device.room_no : '')");
         content = content.replace(/hotelData\?\.device\?\.ip_address/g, '(hotelData && hotelData.device && hotelData.device.ip_address)');
-        content = content.replace(/hotelData\.device\?\.device_id/g, '(hotelData.device ? hotelData.device.device_id : "")');
-        content = content.replace(/hotelData\.hotel\?\.hotel_location/g, '(hotelData.hotel ? hotelData.hotel.hotel_location : "")');
-        content = content.replace(/primaryAirportData\?\.iata_code/g, '(primaryAirportData ? primaryAirportData.iata_code : "")');
-        content = content.replace(/secondaryAirportData\?\.iata_code/g, '(secondaryAirportData ? secondaryAirportData.iata_code : "")');
+        content = content.replace(/hotelData\.device\?\.device_id/g, "(hotelData.device ? hotelData.device.device_id : '')");
+        content = content.replace(/hotelData\.hotel\?\.hotel_location/g, "(hotelData.hotel ? hotelData.hotel.hotel_location : '')");
+        content = content.replace(/primaryAirportData\?\.iata_code/g, "(primaryAirportData ? primaryAirportData.iata_code : '')");
+        content = content.replace(/secondaryAirportData\?\.iata_code/g, "(secondaryAirportData ? secondaryAirportData.iata_code : '')");
         return content;
     };
 
@@ -79,6 +79,8 @@ if (fs.existsSync(compDir)) {
 
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
     <link rel="stylesheet" href="assets/css/custom.css">
+    <script src="assets/js/webOSTV.js"></script>
+    <script src="assets/js/webos-device.js"></script>
     <script src="assets/js/bridge.js"></script>
     <script src="assets/js/remote.js"></script>
     <script src="assets/js/dataService.js"></script>
@@ -269,6 +271,62 @@ ${menuSliderContent}
         </div>
 
     </div>
+
+    
+    <!-- Comprehensive TV Back Key Handler (LG webOS: 461, Tizen: 10009, Escape: 27, Backspace: 8, webOSBack event & postMessage) -->
+    <script>
+        (function() {
+            function triggerAppBack() {
+                console.log('[Template] Remote Back action triggered');
+                try {
+                    if (window.tvAppInstance && typeof window.tvAppInstance.goBack === 'function') {
+                        window.tvAppInstance.goBack();
+                        return true;
+                    }
+                } catch (e) {
+                    console.warn('[Template] Error executing goBack:', e);
+                }
+                return false;
+            }
+
+            // 1. Direct Keydown Listener (Capture phase to run before any other script)
+            window.addEventListener('keydown', function(event) {
+                var code = event.keyCode || event.which;
+                if (code === 461 || code === 10009 || code === 27 || code === 8) {
+                    if (code === 8 && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                        return;
+                    }
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    console.log('[Template] Back key intercepted (' + code + ')');
+                    triggerAppBack();
+                    return false;
+                }
+            }, true);
+
+            // 2. PostMessage Listener from parent webOS wrapper
+            window.addEventListener('message', function(event) {
+                if (event && event.data && event.data.type === 'TV_BACK_KEY') {
+                    console.log('[Template] TV_BACK_KEY received via postMessage');
+                    triggerAppBack();
+                }
+            });
+
+            // 3. LG webOS platform back events
+            window.addEventListener('webOSBack', function(e) {
+                console.log('[Template] webOSBack event on window');
+                if (e && e.preventDefault) e.preventDefault();
+                triggerAppBack();
+            });
+
+            document.addEventListener('webOSBack', function(e) {
+                console.log('[Template] webOSBack event on document');
+                if (e && e.preventDefault) e.preventDefault();
+                triggerAppBack();
+            });
+        })();
+    </script>
 
     <!-- Prevent browser zoom via keyboard or mouse wheel -->
     <script>
