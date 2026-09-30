@@ -23,7 +23,7 @@ const TVDataService = {
     }
     if ((forceApi || !config) && navigator.onLine && token) {
       try {
-        const apiRes = await fetch("https://tvapp.digiemperor.com/api/tv/template/check-version", {
+        const apiRes = await fetch("https://paxtvhospitality.paxtvnetwork.com/api/tv/template/check-version", {
           method: "GET",
           headers: { "Accept": "application/json", "Authorization": `Bearer ${token}` }
         });

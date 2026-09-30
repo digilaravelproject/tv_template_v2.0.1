@@ -239,62 +239,134 @@
      * @param {Array<Object>} appList
      * @returns {Promise<Array<Object>>}
      */
+    
+
+    /**
+     * Map app to candidate webOS IDs
+     */
+    getWebOsCandidates: function (idOrPkg) {
+      if (!idOrPkg) return [];
+      var cleaned = String(idOrPkg).toLowerCase().trim();
+      if (cleaned.includes('vending') || cleaned.includes('playstore') || cleaned.includes('play store') || cleaned.includes('google play')) {
+        return [];
+      }
+      var candidateMap = {
+        'youtube': ['youtube.leanback.v4', 'youtube', 'com.webos.app.youtube'],
+        'com.google.android.youtube.tv': ['youtube.leanback.v4', 'youtube', 'com.webos.app.youtube'],
+        'com.google.android.youtube': ['youtube.leanback.v4', 'youtube', 'com.webos.app.youtube'],
+        'netflix': ['netflix', 'com.webos.app.netflix'],
+        'com.netflix.ninja': ['netflix', 'com.webos.app.netflix'],
+        'com.netflix.mediaclient': ['netflix', 'com.webos.app.netflix'],
+        'prime': ['amazon', 'com.amazon.app', 'com.webos.app.amazon'],
+        'amazon': ['amazon', 'com.amazon.app', 'com.webos.app.amazon'],
+        'primevideo': ['amazon', 'com.amazon.app', 'com.webos.app.amazon'],
+        'com.amazon.amazonvideo.livingroom': ['amazon', 'com.amazon.app', 'com.webos.app.amazon'],
+        'com.amazon.avod.thirdpartyclient': ['amazon', 'com.amazon.app', 'com.webos.app.amazon'],
+        'zee5': ['zee5', 'com.zee5.webos', 'com.zee5.app', 'com.graymatrix.did', 'in.zee5.app', 'com.zee5.zee5'],
+        'com.graymatrix.did': ['zee5', 'com.zee5.webos', 'com.zee5.app', 'com.graymatrix.did', 'in.zee5.app', 'com.zee5.zee5'],
+        'hotstar': ['hotstar', 'in.startv.hotstar', 'com.hotstar.webos', 'com.disney.hotstar'],
+        'in.startv.hotstar': ['hotstar', 'in.startv.hotstar', 'com.hotstar.webos', 'com.disney.hotstar'],
+        'sonyliv': ['sonyliv', 'com.sony.liv', 'com.sonyliv.webos'],
+        'com.sony.liv': ['sonyliv', 'com.sony.liv', 'com.sonyliv.webos'],
+        'jiocinema': ['jiocinema', 'com.jio.media.ondemand', 'com.jio.jiocinema'],
+        'com.jio.media.ondemand': ['jiocinema', 'com.jio.media.ondemand', 'com.jio.jiocinema'],
+        'aha': ['aha', 'com.aha.webos', 'in.aha.video'],
+        'sunnxt': ['sunnxt', 'com.sunnxt.webos', 'com.suntv.sunnxt'],
+        'mxplayer': ['mxplayer', 'com.mxplayer.webos', 'com.mxtech.videoplayer.ad']
+      };
+
+      for (var key in candidateMap) {
+        if (cleaned === key || cleaned.includes(key)) {
+          return candidateMap[key];
+        }
+      }
+      return [cleaned];
+    },
+
+    checkSingleAppInstalled: function (candidates, onResult) {
+      if (!Array.isArray(candidates) || candidates.length === 0) {
+        return onResult(false, null);
+      }
+      var self = this;
+      var index = 0;
+
+      function testNext() {
+        if (index >= candidates.length) {
+          return onResult(false, null);
+        }
+        var currentId = candidates[index];
+        index++;
+
+        try {
+          window.webOS.service.request('luna://com.webos.applicationManager', {
+            method: 'getAppLoadStatus',
+            parameters: { appId: currentId, id: currentId },
+            onSuccess: function (res) {
+              var isInstalled = Boolean(res && (res.exist === true || res.installed === true));
+              console.log('[WebOSDevice] Tested ' + currentId + ' -> ' + isInstalled, res);
+              if (isInstalled) {
+                return onResult(true, currentId);
+              } else {
+                testNext();
+              }
+            },
+            onFailure: function (err) {
+              console.log('[WebOSDevice] Tested ' + currentId + ' -> not installed:', err && err.errorText);
+              testNext();
+            }
+          });
+        } catch (e) {
+          testNext();
+        }
+      }
+
+      testNext();
+    },
+
+    /**
+     * Filter server configured app list and return ONLY those apps that are actually installed on this webOS TV.
+     * Android-only apps (like Google Play Store) are permanently omitted.
+     * @param {Array<Object>} appList
+     * @returns {Promise<Array<Object>>}
+     */
     checkInstalledApps: function (appList) {
       var self = this;
       if (!Array.isArray(appList) || appList.length === 0) {
         return Promise.resolve([]);
       }
 
+      var candidates = appList.filter(function (app) {
+        var pkg = (app.package_name || app.id || '').toLowerCase();
+        var name = (app.name || '').toLowerCase();
+        return !pkg.includes('vending') && !pkg.includes('playstore') && !name.includes('play store');
+      });
+
       if (!self.isWebOS || !window.webOS || !window.webOS.service) {
-        // Outside webOS TV, filter out Google Play Store
-        var nonPlayStore = appList.filter(function (a) {
-          var pkg = (a.package_name || a.id || '').toLowerCase();
-          var name = (a.name || '').toLowerCase();
-          return !pkg.includes('vending') && !pkg.includes('playstore') && !name.includes('play store');
-        });
-        return Promise.resolve(nonPlayStore);
+        return Promise.resolve(candidates);
       }
 
-      var promises = appList.map(function (app) {
+      var promises = candidates.map(function (app) {
         return new Promise(function (resolve) {
-          var pkg = (app.package_name || app.id || '').toLowerCase();
-          var name = (app.name || '').toLowerCase();
-
-          // 1. Google Play Store can NEVER exist on webOS
-          if (pkg.includes('vending') || pkg.includes('playstore') || name.includes('play store') || name.includes('playstore')) {
-            console.log('[WebOSDevice] Permanently omitted Android Play Store from webOS');
+          var candList = self.getWebOsCandidates(app.package_name || app.id);
+          if (candList.length === 0) {
             return resolve(null);
           }
-
-          var targetId = self.mapToWebOsAppId(app.package_name || app.id);
-
-          try {
-            window.webOS.service.request('luna://com.webos.applicationManager', {
-              method: 'getAppLoadStatus',
-              parameters: { id: targetId },
-              onSuccess: function (res) {
-                var exists = Boolean(res && (res.exist === true || res.installed === true));
-                console.log('[WebOSDevice] App ' + app.name + ' (' + targetId + ') installed on TV:', exists);
-                if (exists) {
-                  resolve(app);
-                } else {
-                  resolve(null);
-                }
-              },
-              onFailure: function (err) {
-                console.log('[WebOSDevice] App ' + app.name + ' (' + targetId + ') not installed on TV:', err && err.errorText);
-                resolve(null);
-              }
-            });
-          } catch (e) {
-            resolve(null);
-          }
+          self.checkSingleAppInstalled(candList, function (installed, workingId) {
+            if (installed) {
+              var cloned = Object.assign({}, app);
+              cloned.webos_app_id = workingId;
+              cloned.package_name = workingId;
+              resolve(cloned);
+            } else {
+              resolve(null);
+            }
+          });
         });
       });
 
       return Promise.all(promises).then(function (results) {
         var verified = results.filter(Boolean);
-        console.log('[WebOSDevice] Total verified installed apps on TV: ' + verified.length + ' of ' + appList.length);
+        console.log('[WebOSDevice] Total verified installed apps on TV: ' + verified.length);
         return verified;
       });
     },
