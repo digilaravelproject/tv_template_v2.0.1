@@ -36,38 +36,23 @@ window.TVAppsController = {
     return list;
   },
   async syncInstalledApps() {
-    var _a2;
-    var _a, _b;
-    const isWebOS = typeof window !== "undefined" && Boolean(
-      (window.WebOSDevice && window.WebOSDevice.isWebOS || window.parent && window.parent.WebOSDevice && window.parent.WebOSDevice.isWebOS) &&
-      !window.flutterBridge &&
-      !window.FlutterBridge &&
-      !/android/i.test(navigator.userAgent || '')
-    );
-    const webosDev = typeof window !== "undefined" && (window.WebOSDevice || window.parent && window.parent.WebOSDevice);
+    var _a;
     const inst = window.tvAppInstance || this;
     const baseList = Array.isArray((_a = inst.hotelData) == null ? void 0 : _a.active_ott) && inst.hotelData.active_ott.length > 0 ? inst.hotelData.active_ott : Array.isArray(this.activeOttList) ? this.activeOttList : [];
-    if (isWebOS && webosDev && typeof webosDev.checkInstalledApps === "function") {
+
+    const isFlutter = Boolean(
+      (window.flutterBridge && typeof window.flutterBridge.isAvailable === "function" && window.flutterBridge.isAvailable()) ||
+      window.FlutterBridge ||
+      window.flutterBridge
+    );
+
+    // 1. Android TV / Flutter Bridge (Highest priority)
+    if (isFlutter) {
       try {
-        console.log("[TVApps] Checking webOS installed status for " + baseList.length + " server apps...");
-        const verified = await webosDev.checkInstalledApps(baseList);
-        this.activeOttList = verified;
-        this.hasSyncedInstalled = true;
-        if (window.tvAppInstance) {
-          window.tvAppInstance.activeOttList = verified;
-        }
-        console.log(`[TVApps] Synced with TV: ${verified.length} of ${baseList.length} configured apps are installed`);
-        return;
-      } catch (err) {
-        console.warn("[TVApps] webOS checkInstalledApps error:", err);
-      }
-    }
-    if ((_b = window.flutterBridge) == null ? void 0 : (_a2 = _b.isAvailable) == null ? void 0 : _a2.call(_b)) {
-      try {
-        if (typeof window.flutterBridge.getInstalledApps === "function") {
+        if (typeof window.flutterBridge?.getInstalledApps === "function") {
           const installed = await window.flutterBridge.getInstalledApps();
           if (Array.isArray(installed)) {
-            const installedPkgSet = /* @__PURE__ */ new Set();
+            const installedPkgSet = new Set();
             installed.forEach((item) => {
               if (typeof item === "string") {
                 installedPkgSet.add(item.toLowerCase().trim());
@@ -86,10 +71,36 @@ window.TVAppsController = {
               window.tvAppInstance.activeOttList = filtered;
             }
             console.log(`[TVApps] Synced with Flutter TV: ${filtered.length} of ${baseList.length} configured apps are installed`);
+            return;
           }
         }
       } catch (e) {
         console.warn("[TVApps] Error querying installed apps from bridge:", e);
+      }
+      return;
+    }
+
+    // 2. LG webOS (Only if PalmServiceBridge exists and NOT Android)
+    const isWebOS = typeof window !== "undefined" && Boolean(
+      window.PalmServiceBridge &&
+      (window.WebOSDevice?.isWebOS || window.parent?.WebOSDevice?.isWebOS) &&
+      !/android/i.test(navigator.userAgent || "")
+    );
+    const webosDev = typeof window !== "undefined" && (window.WebOSDevice || window.parent?.WebOSDevice);
+
+    if (isWebOS && webosDev && typeof webosDev.checkInstalledApps === "function") {
+      try {
+        console.log("[TVApps] Checking webOS installed status for " + baseList.length + " server apps...");
+        const verified = await webosDev.checkInstalledApps(baseList);
+        this.activeOttList = verified;
+        this.hasSyncedInstalled = true;
+        if (window.tvAppInstance) {
+          window.tvAppInstance.activeOttList = verified;
+        }
+        console.log(`[TVApps] Synced with TV: ${verified.length} of ${baseList.length} configured apps are installed`);
+        return;
+      } catch (err) {
+        console.warn("[TVApps] webOS checkInstalledApps error:", err);
       }
     }
   },
@@ -161,19 +172,39 @@ window.TVAppsController = {
     return `${base} shadow-md`;
   },
   launchApp(app) {
-    var _a, _b, _c;
     if (!app) return;
     const pkgName = app.package_name || app.id;
     console.log("[TV] Launching OTT App:", app.name, pkgName);
-    if ((_a = window.flutterBridge) == null ? void 0 : _a.launchApp) {
-      window.flutterBridge.launchApp(pkgName).catch((e) => console.warn("[TV] Flutter launchApp warning:", e));
-    } else if ((_b = window.FlutterBridge) == null ? void 0 : _b.postMessage) {
-      window.FlutterBridge.postMessage(JSON.stringify({ method: "launchApp", args: [pkgName], id: Date.now() }));
-    } else if ((_c = window.AndroidBridge) == null ? void 0 : _c.launchApp) {
-      window.AndroidBridge.launchApp(pkgName);
+
+    const isFlutter = Boolean(
+      (window.flutterBridge && typeof window.flutterBridge.isAvailable === "function" && window.flutterBridge.isAvailable()) ||
+      window.FlutterBridge ||
+      window.flutterBridge
+    );
+
+    if (isFlutter) {
+      if (window.flutterBridge?.launchApp) {
+        window.flutterBridge.launchApp(pkgName).catch((e) => console.warn("[TV] Flutter launchApp warning:", e));
+      } else if (window.FlutterBridge?.postMessage) {
+        window.FlutterBridge.postMessage(JSON.stringify({ method: "launchApp", args: [pkgName], id: Date.now() }));
+      }
+      this.showToast(`Launching ${app.name}...`);
+      return;
     }
-    const webosDev = typeof window !== "undefined" && (window.WebOSDevice || window.parent && window.parent.WebOSDevice);
-    if (webosDev && typeof webosDev.launchApp === "function") {
+
+    if (window.AndroidBridge?.launchApp) {
+      window.AndroidBridge.launchApp(pkgName);
+      this.showToast(`Launching ${app.name}...`);
+      return;
+    }
+
+    const isWebOS = typeof window !== "undefined" && Boolean(
+      window.PalmServiceBridge &&
+      (window.WebOSDevice?.isWebOS || window.parent?.WebOSDevice?.isWebOS) &&
+      !/android/i.test(navigator.userAgent || "")
+    );
+    const webosDev = typeof window !== "undefined" && (window.WebOSDevice || window.parent?.WebOSDevice);
+    if (isWebOS && webosDev && typeof webosDev.launchApp === "function") {
       webosDev.launchApp(pkgName);
     }
     this.showToast(`Launching ${app.name}...`);

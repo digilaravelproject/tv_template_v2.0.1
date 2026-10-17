@@ -46,16 +46,20 @@ window.loadLocalJson = function(url) {
     CALL_COUNTER = (CALL_COUNTER + 1) % 1e6;
     return CALL_COUNTER;
   }
+  function isFlutterAvailable() {
+    return typeof window !== "undefined" && Boolean(
+      (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") ||
+      (window.flutterBridge && typeof window.flutterBridge.postMessage === "function")
+    );
+  }
   function getWebOSDevice() {
+    if (isFlutterAvailable()) return null;
     if (typeof window !== "undefined") {
-      if (window.flutterBridge || window.FlutterBridge || /android/i.test(navigator.userAgent || "")) return null;
+      if (/android/i.test(navigator.userAgent || "")) return null;
       const dev = window.WebOSDevice || (window.parent && window.parent.WebOSDevice);
       if (dev && dev.isWebOS) return dev;
     }
     return null;
-  }
-  function isFlutterAvailable() {
-    return typeof window !== "undefined" && Boolean(window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function");
   }
   function callNative(method, args, timeoutMs) {
     return new Promise((resolve, reject) => {
@@ -263,6 +267,9 @@ window.loadLocalJson = function(url) {
      */
     launchApp(packageName) {
       try {
+        if (isFlutterAvailable()) {
+          return callNative("launchApp", [packageName]);
+        }
         const webos = getWebOSDevice();
         if (webos && typeof webos.launchApp === "function") {
           console.log("[Bridge] Routing launchApp to webOS:", packageName);
@@ -274,13 +281,11 @@ window.loadLocalJson = function(url) {
         return Promise.reject(e);
       }
     },
-    /**
-     * Launch HDMI / Hardware TV input by model or port identifier
-     * @param {string} model - Port identifier (e.g. "HDMI 1" or "HDMI_1")
-     * @returns {Promise<Object>} { success: boolean }
-     */
     launchHdmi(model) {
       try {
+        if (isFlutterAvailable()) {
+          return callNative("launchHdmi", [model]);
+        }
         const webos = getWebOSDevice();
         if (webos && typeof webos.switchInput === "function") {
           console.log("[Bridge] Routing launchHdmi to webOS:", model);
@@ -292,13 +297,11 @@ window.loadLocalJson = function(url) {
         return Promise.reject(e);
       }
     },
-    /**
-     * Launch Live TV / Connected Set-top box port
-     * @param {string} [port] - Optional specific port name
-     * @returns {Promise<Object>} { success: boolean, port: string }
-     */
     launchLiveTv(port) {
       try {
+        if (isFlutterAvailable()) {
+          return callNative("launchLiveTv", port ? [port] : []);
+        }
         const webos = getWebOSDevice();
         if (webos && typeof webos.launchLiveTv === "function") {
           console.log("[Bridge] Routing launchLiveTv to webOS:", port);
@@ -574,6 +577,9 @@ window.loadLocalJson = function(url) {
      */
     async getInstalledApps() {
       try {
+        if (isFlutterAvailable()) {
+          return await callNative("getInstalledApps", []);
+        }
         const webos = getWebOSDevice();
         if (webos && typeof webos.getInstalledApps === "function") {
           return new Promise((resolve) => {
@@ -589,27 +595,19 @@ window.loadLocalJson = function(url) {
             });
           });
         }
-        if (isFlutterAvailable()) {
-          return await callNative("getInstalledApps", []);
-        }
         return [];
       } catch (e) {
         return [];
       }
     },
-    /**
-     * Alias for getInstalledApps
-     */
     async getApps() {
       return this.getInstalledApps();
     },
-    /**
-     * Get available TV input ports (Real Hardware TV Ports Only)
-     * Queries native Flutter Android TV TvInputManager directly
-     * @returns {Promise<Array<Object>>}
-     */
     async getTvInputs() {
       try {
+        if (isFlutterAvailable()) {
+          return await callNative("getTvInputs", []);
+        }
         const webos = getWebOSDevice();
         if (webos) {
           return [

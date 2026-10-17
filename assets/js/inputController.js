@@ -97,16 +97,31 @@ window.TVInputController = {
       const idUpper = String(rawId).toUpperCase();
       let type = port.type || "HDMI";
       if (idUpper.includes("AV") || idUpper.includes("COMPOSITE")) type = "AV";
-      else if (idUpper.includes("TUNER") || idUpper.includes("DTV") || idUpper.includes("ANTENNA")) type = "TUNER";
+      else if (idUpper.includes("TUNER") || idUpper.includes("DTV") || idUpper.includes("ANTENNA") || String(port.label || "").toUpperCase().includes("LIVE TV")) type = "TUNER";
       else if (idUpper.includes("HDMI")) type = "HDMI";
+
+      let cleanName = port.name || port.label;
+      if (!cleanName || cleanName.includes(".") || cleanName.includes("/")) {
+        if (type === "TUNER") cleanName = "Live TV (Tuner)";
+        else if (type === "AV") cleanName = "AV Input";
+        else {
+          const matchHdmi = idUpper.match(/HDMI[-_\s]?([0-9]+)/i);
+          const matchHw = idUpper.match(/HW([0-9]+)/i);
+          if (matchHdmi) cleanName = "HDMI " + matchHdmi[1];
+          else if (matchHw) cleanName = "HDMI " + matchHw[1];
+          else cleanName = `HDMI ${idx + 1}`;
+        }
+      }
+
       let badge = port.badge;
       if (!badge) {
-        if (idUpper.includes("EARC") || idUpper.includes("ARC") || type === "HDMI" && idx === 1) badge = "eARC / ARC";
+        if (idUpper.includes("EARC") || idUpper.includes("ARC") || (type === "HDMI" && idx === 1)) badge = "eARC / ARC";
         else if (type === "HDMI") badge = "4K HDR 60Hz";
         else if (type === "AV") badge = "Composite RCA";
         else if (type === "TUNER") badge = "DTV Antenna";
         else badge = "Connected";
       }
+
       let desc = port.description;
       if (!desc) {
         if (type === "HDMI" && (idUpper.includes("1") || idx === 0)) desc = "Set-top Box / Cable TV";
@@ -117,10 +132,11 @@ window.TVInputController = {
         else if (type === "TUNER") desc = "Over-The-Air Digital Channels";
         else desc = "Connected Hardware Port";
       }
+
       return {
         id: rawId,
-        label: port.label || port.name || rawId,
-        name: port.name || port.label || rawId,
+        label: cleanName,
+        name: cleanName,
         model: port.model || rawId,
         type,
         badge,
@@ -187,7 +203,6 @@ window.TVInputController = {
     return (this.inputPorts || []).length > 4;
   },
   async selectInputPort(port) {
-    var _a, _b, _c, _d;
     if (!port || this.isSwitchingInput) return;
     const portId = port.id || port.model || port.name || port.label;
     const portLabel = port.label || port.name || portId;
@@ -196,33 +211,46 @@ window.TVInputController = {
     this.switchingPortName = portLabel;
     this.isSwitchingInput = true;
     localStorage.setItem("last_tv_input_port", portId);
-    if ((_a = window.flutterBridge) == null ? void 0 : _a.savePortPreference) {
-      window.flutterBridge.savePortPreference(portId).catch(() => {
-      });
+
+    if (window.flutterBridge?.savePortPreference) {
+      window.flutterBridge.savePortPreference(portId).catch(() => {});
     }
+
+    const isFlutter = Boolean(
+      (window.flutterBridge && typeof window.flutterBridge.isAvailable === "function" && window.flutterBridge.isAvailable()) ||
+      window.FlutterBridge ||
+      window.flutterBridge
+    );
+
     try {
-      const webosDev = typeof window !== "undefined" && (window.WebOSDevice || window.parent && window.parent.WebOSDevice);
-      if (port.type === "TUNER") {
-        if (webosDev && typeof webosDev.launchLiveTv === "function") {
-          webosDev.launchLiveTv(portId);
-        } else if ((_b = window.flutterBridge) == null ? void 0 : _b.launchLiveTv) {
-          await window.flutterBridge.launchLiveTv(portId);
+      if (isFlutter) {
+        if (port.type === "TUNER") {
+          if (window.flutterBridge?.launchLiveTv) {
+            await window.flutterBridge.launchLiveTv(portId);
+          } else if (window.FlutterBridge?.postMessage) {
+            window.FlutterBridge.postMessage(JSON.stringify({ method: "launchLiveTv", args: [portId], id: Date.now() }));
+          }
+        } else {
+          if (window.flutterBridge?.launchHdmi) {
+            await window.flutterBridge.launchHdmi(portId);
+          } else if (window.FlutterBridge?.postMessage) {
+            window.FlutterBridge.postMessage(JSON.stringify({ method: "launchHdmi", args: [portId], id: Date.now() }));
+          }
         }
       } else {
-        if (webosDev && typeof webosDev.switchInput === "function") {
-          webosDev.switchInput(portId);
-        } else if ((_c = window.flutterBridge) == null ? void 0 : _c.launchHdmi) {
-          await window.flutterBridge.launchHdmi(portId);
-        } else if ((_d = window.FlutterBridge) == null ? void 0 : _d.postMessage) {
-          window.FlutterBridge.postMessage(JSON.stringify({ method: "launchHdmi", args: [portId], id: Date.now() }));
+        const isWebOS = typeof window !== "undefined" && Boolean(
+          window.PalmServiceBridge &&
+          (window.WebOSDevice?.isWebOS || window.parent?.WebOSDevice?.isWebOS) &&
+          !/android/i.test(navigator.userAgent || "")
+        );
+        const webosDev = typeof window !== "undefined" && (window.WebOSDevice || window.parent?.WebOSDevice);
+        if (isWebOS && webosDev) {
+          if (port.type === "TUNER" && typeof webosDev.launchLiveTv === "function") {
+            webosDev.launchLiveTv(portId);
+          } else if (typeof webosDev.switchInput === "function") {
+            webosDev.switchInput(portId);
+          }
         }
-      }
-      if (false) {
-        await window.flutterBridge.launchLiveTv(portId);
-      } else if ((_c = window.flutterBridge) == null ? void 0 : _c.launchHdmi) {
-        await window.flutterBridge.launchHdmi(portId);
-      } else if ((_d = window.FlutterBridge) == null ? void 0 : _d.postMessage) {
-        window.FlutterBridge.postMessage(JSON.stringify({ method: "launchHdmi", args: [portId], id: Date.now() }));
       }
     } catch (err) {
       console.warn("[TVInput] Bridge launch warning:", err);
