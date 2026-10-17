@@ -103,3 +103,64 @@ html, body {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
+
+/* Flight Screen Formatting & High Legibility TV Styles */
+.flight-no-badge {
+    min-width: 155px;
+    margin-right: 24px;
+    display: inline-block;
+    flex-shrink: 0;
+    font-family: monospace;
+    font-weight: 900;
+    font-size: 1.55rem;
+    letter-spacing: 0.05em;
+    color: #fbbf24;
+}
+.flight-airline-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.02em;
+}
+.flight-dest-wrap {
+    display: flex;
+    align-items: center;
+}
+.flight-dest-icon {
+    width: 22px;
+    height: 22px;
+    margin-right: 14px;
+    flex-shrink: 0;
+    color: #fbbf24;
+}
+.flight-dest-text {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.02em;
+}
+.flight-time-text {
+    font-family: monospace;
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 0.04em;
+}
+.flight-terminal-badge {
+    display: inline-block;
+    padding: 4px 16px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    font-family: monospace;
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #f8fafc;
+}
+

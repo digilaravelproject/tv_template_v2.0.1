@@ -1923,20 +1923,19 @@
             </div>
         </div>
 
-        <!-- Table Column Headers (Pixel-Perfect Alignment with Rows) -->
+        <!-- Table Column Headers (Pixel-Perfect Alignment with Rows, Gate Removed, Centered Status) -->
         <div class="px-8 bg-black/40 border-b border-white/10">
-            <div class="grid grid-cols-12 gap-4 px-4 py-3 text-sm uppercase font-black text-amber-400 tracking-wider border-l-4 border-transparent">
-                <div class="col-span-3">Flight / Airline</div>
+            <div class="grid grid-cols-12 gap-4 px-5 py-3.5 text-base uppercase font-black text-amber-400 tracking-wider border-l-4 border-transparent">
+                <div class="col-span-4">Flight / Airline</div>
                 <div class="col-span-3" x-text="activeFlightTab === 'departures' ? 'Destination' : 'Origin City'"></div>
                 <div class="col-span-2 text-center">Scheduled / Est.</div>
                 <div class="col-span-1 text-center">Terminal</div>
-                <div class="col-span-1 text-center" x-text="activeFlightTab === 'departures' ? 'Gate' : 'Belt'"></div>
-                <div class="col-span-2 text-right">Status</div>
+                <div class="col-span-2 text-center">Status</div>
             </div>
         </div>
 
         <!-- Middle Section: Exactly 7 Flight Rows (Large TV Legibility, Zero Scrollbar) -->
-        <div class="flex-1 overflow-hidden px-8 py-1.5 flex flex-col justify-start"
+        <div class="flex-1 overflow-hidden px-8 py-2 flex flex-col justify-start"
             style="scrollbar-width: none; -ms-overflow-style: none;">
 
             <!-- Loading State -->
@@ -1947,61 +1946,59 @@
 
             <!-- Paginated 7 Flight Rows -->
             <template x-if="!isFlightLoading">
-                <div class="space-y-1">
+                <div class="space-y-1.5">
                     <template x-for="(flight, idx) in getPaginatedFlights()" :key="flight.flight_no + '_' + idx">
-                        <div class="grid grid-cols-12 gap-4 h-[60px] items-center transition-all duration-150 rounded-xl px-4 cursor-pointer border-l-4 border-transparent"
+                        <div class="grid grid-cols-12 gap-4 h-[62px] items-center transition-all duration-150 rounded-xl px-5 cursor-pointer border-l-4 border-transparent"
                             @mouseenter="flightFocusZone = 'rows'; flightFocusIndex = idx; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                             :class="{
                                  'bg-amber-400/20 !border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.25)]': (flightFocusZone === 'rows' && flightFocusIndex === idx),
                                  'hover:bg-white/[0.05] bg-white/[0.02]': !(flightFocusZone === 'rows' && flightFocusIndex === idx)
                              }">
 
-                            <!-- Flight No & Airline (Large Prominent Fonts) -->
-                            <div class="col-span-3 flex items-center space-x-3.5">
-                                <span class="font-mono font-black text-xl tracking-wider text-amber-400"
-                                    :class="(flightFocusZone === 'rows' && flightFocusIndex === idx) ? 'text-amber-300 scale-105 transition-transform' : ''"
+                            <!-- Flight No & Airline (Guaranteed 25px gap & vertical alignment) -->
+                            <div class="col-span-4 flex items-center overflow-hidden">
+                                <span class="font-mono font-black text-amber-400 flex-shrink-0"
+                                    style="font-size: 24px; min-width: 135px; margin-right: 25px; display: inline-block; letter-spacing: 0.05em;"
+                                    :class="(flightFocusZone === 'rows' && flightFocusIndex === idx) ? '!text-amber-300 scale-105 transition-transform' : ''"
                                     x-text="flight.flight_no"></span>
-                                <span class="text-base text-slate-200 font-bold truncate"
+                                <span class="text-slate-100 font-bold truncate tracking-wide"
+                                    style="font-size: 20px;"
                                     x-text="flight.airline"></span>
                             </div>
 
-                            <!-- Destination or Origin City (Large Font) -->
-                            <div class="col-span-3 flex items-center space-x-2.5">
-                                <svg class="w-4 h-4 text-amber-400/80 flex-shrink-0" viewBox="0 0 24 24"
-                                    fill="currentColor">
+                            <!-- Destination or Origin City (Large Font & Clear Icon) -->
+                            <div class="col-span-3 flex items-center overflow-hidden">
+                                <svg class="text-amber-400 flex-shrink-0" style="width: 20px; height: 20px; margin-right: 12px;" viewBox="0 0 24 24" fill="currentColor">
                                     <path
                                         d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                                 </svg>
-                                <span class="text-lg font-extrabold text-white tracking-wide truncate"
+                                <span class="text-white font-extrabold truncate tracking-wide"
+                                    style="font-size: 20px;"
                                     x-text="activeFlightTab === 'departures' ? flight.destination : flight.origin"></span>
                             </div>
 
                             <!-- Scheduled / Estimated Time (Large Bold Mono) -->
-                            <div class="col-span-2 text-center font-mono font-black text-lg">
-                                <span class="text-white" x-text="flight.scheduled_time"></span>
+                            <div class="col-span-2 text-center">
+                                <span class="text-white font-mono font-black" style="font-size: 22px; letter-spacing: 0.04em;" x-text="flight.scheduled_time"></span>
                                 <template
                                     x-if="flight.estimated_time && flight.estimated_time !== flight.scheduled_time">
-                                    <span class="text-amber-400 text-sm ml-1 font-bold"
+                                    <span class="text-amber-400 font-mono font-bold" style="font-size: 17px; margin-left: 8px;"
                                         x-text="`(${flight.estimated_time})`"></span>
                                 </template>
                             </div>
 
                             <!-- Terminal Badge -->
-                            <div class="col-span-1 text-center font-mono font-black text-base text-slate-200">
-                                <span class="px-3 py-1 rounded-lg bg-white/10 border border-white/15 shadow-xs"
+                            <div class="col-span-1 text-center">
+                                <span class="font-mono font-black text-slate-100 shadow-xs"
+                                    style="font-size: 18px; padding: 4px 14px; border-radius: 10px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); display: inline-block;"
                                     x-text="flight.terminal || 'T2'"></span>
                             </div>
 
-                            <!-- Gate or Baggage Belt (Bright Amber) -->
-                            <div class="col-span-1 text-center font-mono font-black text-lg text-amber-300">
-                                <span class="px-2.5 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/30"
-                                    x-text="activeFlightTab === 'departures' ? (flight.gate || '-') : (flight.belt || '-')"></span>
-                            </div>
-
-                            <!-- Live Flight Status Badge (Large Glowing Pill) -->
-                            <div class="col-span-2 text-right">
+                            <!-- Live Flight Status Badge (Centered, Inward from edge) -->
+                            <div class="col-span-2 flex justify-center items-center">
                                 <span
-                                    class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-black uppercase tracking-wider shadow-sm"
+                                    class="inline-flex items-center px-5 py-1.5 rounded-full uppercase tracking-wider shadow-sm"
+                                    style="font-size: 15px; font-weight: 900;"
                                     :class="{
                                           'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.25)]': ['On Time', 'Landed'].includes(flight.status),
                                           'bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.25)]': ['Boarding', 'Delayed'].includes(flight.status),
