@@ -48,8 +48,9 @@ window.loadLocalJson = function(url) {
   }
   function getWebOSDevice() {
     if (typeof window !== "undefined") {
-      if (window.WebOSDevice) return window.WebOSDevice;
-      if (window.parent && window.parent.WebOSDevice) return window.parent.WebOSDevice;
+      if (window.flutterBridge || window.FlutterBridge || /android/i.test(navigator.userAgent || "")) return null;
+      const dev = window.WebOSDevice || (window.parent && window.parent.WebOSDevice);
+      if (dev && dev.isWebOS) return dev;
     }
     return null;
   }

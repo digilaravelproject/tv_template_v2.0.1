@@ -9,8 +9,17 @@
 
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
     <link rel="stylesheet" href="assets/css/custom.css">
-    <script src="assets/js/webOSTV.js"></script>
-    <script src="assets/js/webos-device.js"></script>
+    <script>
+        // Only load webOS adapter if running on native LG webOS TV (never on Android/Flutter)
+        (function() {
+            var ua = navigator.userAgent || '';
+            var isWebOS = (Boolean(window.PalmServiceBridge) || /web0s|webos/i.test(ua)) && !/android/i.test(ua);
+            if (isWebOS) {
+                document.write('<script src="assets/js/webOSTV.js"><\/script>');
+                document.write('<script src="assets/js/webos-device.js"><\/script>');
+            }
+        })();
+    </script>
     <script src="assets/js/bridge.js"></script>
     <script src="assets/js/remote.js"></script>
     <script src="assets/js/dataService.js"></script>

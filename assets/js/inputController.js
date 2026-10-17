@@ -12,7 +12,13 @@ window.TVInputController = {
     this.inputLoading = true;
     this.activeInputFocusIndex = 0;
     await this.fetchTvInputs();
-    this.$nextTick(() => {
+    if (window.tvAppInstance && window.tvAppInstance !== this) {
+      window.tvAppInstance.inputPorts = this.inputPorts;
+      window.tvAppInstance.inputLoading = false;
+      window.tvAppInstance.currentActivePortId = this.currentActivePortId;
+    }
+    const nextTick = typeof this.$nextTick === "function" ? this.$nextTick.bind(this) : (fn) => setTimeout(fn, 50);
+    nextTick(() => {
       this.focusCurrentInputPort();
     });
   },

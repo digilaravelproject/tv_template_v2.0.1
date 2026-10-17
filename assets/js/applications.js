@@ -10,7 +10,10 @@ window.TVAppsController = {
   getActiveOttList() {
     var _a, _b;
     const isWebOS = typeof window !== "undefined" && Boolean(
-      window.WebOSDevice && window.WebOSDevice.isWebOS || window.parent && window.parent.WebOSDevice && window.parent.WebOSDevice.isWebOS || window.webOS || window.parent && window.parent.webOS
+      (window.WebOSDevice && window.WebOSDevice.isWebOS || window.parent && window.parent.WebOSDevice && window.parent.WebOSDevice.isWebOS) &&
+      !window.flutterBridge &&
+      !window.FlutterBridge &&
+      !/android/i.test(navigator.userAgent || '')
     );
     let list = [];
     if (this.hasSyncedInstalled && Array.isArray(this.activeOttList)) {
@@ -36,7 +39,10 @@ window.TVAppsController = {
     var _a2;
     var _a, _b;
     const isWebOS = typeof window !== "undefined" && Boolean(
-      window.WebOSDevice && window.WebOSDevice.isWebOS || window.parent && window.parent.WebOSDevice && window.parent.WebOSDevice.isWebOS || window.webOS || window.parent && window.parent.webOS
+      (window.WebOSDevice && window.WebOSDevice.isWebOS || window.parent && window.parent.WebOSDevice && window.parent.WebOSDevice.isWebOS) &&
+      !window.flutterBridge &&
+      !window.FlutterBridge &&
+      !/android/i.test(navigator.userAgent || '')
     );
     const webosDev = typeof window !== "undefined" && (window.WebOSDevice || window.parent && window.parent.WebOSDevice);
     const inst = window.tvAppInstance || this;

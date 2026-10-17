@@ -369,9 +369,12 @@ window.TVSettingsController = {
   isHdmiSelected() {
     var _a;
     try {
-      const p = this.getResolvedPortPreference();
+      const p = String(this.getResolvedPortPreference() || "");
       const ports = ((_a = this.hwData) == null ? void 0 : _a.availableTvPorts) || this.availableTvPorts || ["HDMI 1", "HDMI 2", "HDMI 3"];
-      return ports.some((port) => String(port).toLowerCase() === String(p).toLowerCase()) || String(p).toUpperCase().startsWith("HDMI");
+      return ports.some((port) => String(port).toLowerCase() === p.toLowerCase()) || 
+             p.toUpperCase().startsWith("HDMI") || 
+             p.toLowerCase().includes(".hdmi.") || 
+             p.toLowerCase().includes("hdmiinputservice");
     } catch (e) {
       return true;
     }
@@ -408,21 +411,164 @@ window.TVSettingsController = {
       return false;
     }
   },
-  getSelectedPortDisplayLabel() {
-    var _a;
+  getPortDisplayLabel(target) {
     try {
-      const val = this.getResolvedPortPreference();
-      if (val === "IPTV") return "IPTV";
-      if (this.isHdmiSelected()) return val;
-      const apps = (typeof this.getActiveOttList === "function" ? this.getActiveOttList() : null) || (window.TVAppsController && typeof window.TVAppsController.getActiveOttList === "function" ? window.TVAppsController.getActiveOttList() : null) || ((_a = this.hotelData) == null ? void 0 : _a.active_ott) || [];
-      const found = apps.find((a) => {
-        const pkg = this.getAppPackageName(a);
-        return pkg && pkg.toLowerCase() === val.toLowerCase();
+      const raw = String(target || this.liveTvSelectedPort || this.getResolvedPortPreference() || "HDMI 1").trim();
+      if (!raw) return "HDMI 1";
+
+      const upper = raw.toUpperCase();
+
+      // 1. IPTV
+      if (upper === "IPTV") return "IPTV";
+
+      // 2. HDMI Check (HDMI 1, HW1, com.mediatek.tvinput/.hdmi.HDMIInputService/HW1)
+      if (upper === "HDMI" || /^HDMI[-_\s]?\d+$/i.test(raw)) {
+        const m = raw.match(/\d+/);
+        return m ? `HDMI ${m[0]}` : "HDMI";
+      }
+      if (raw.toLowerCase().includes(".hdmi.") || raw.toLowerCase().includes("hdmiinputservice")) {
+        const m = raw.match(/HW(\d+)/i) || raw.match(/HDMI[-_\s]?(\d+)/i);
+        return m ? `HDMI ${m[1]}` : "HDMI";
+      }
+
+      // 3. Tuner / Live TV / Antenna / DTV / Cable (e.g. com.mediatek.tvinput/.tuner.TunerInputService/HW1)
+      if (
+        upper.includes("TUNER") ||
+        upper.includes("DTV") ||
+        upper.includes("ANTENNA") ||
+        raw.toLowerCase().includes(".tuner.") ||
+        raw.toLowerCase().includes("tunerinputservice")
+      ) {
+        return "Live TV";
+      }
+
+      // 4. AV / Composite / Component
+      if (upper.includes("COMPOSITE") || upper.includes("AV") || upper.includes("RCA")) {
+        return "AV Input";
+      }
+      if (upper.includes("COMPONENT")) {
+        return "Component";
+      }
+
+      // 5. Check in TVInputController inputPorts
+      if (window.TVInputController && Array.isArray(window.TVInputController.inputPorts)) {
+        const foundPort = window.TVInputController.inputPorts.find(
+          (p) => p && (p.id === raw || p.model === raw || p.name === raw)
+        );
+        if (foundPort) {
+          const l = foundPort.label || foundPort.name;
+          if (l && !l.includes("/") && !l.startsWith("com.")) return l;
+        }
+      }
+
+      // 6. Check availableTvPorts in settings
+      const ports = (this.hwData && Array.isArray(this.hwData.availableTvPorts) ? this.hwData.availableTvPorts : this.availableTvPorts) || [];
+      const matchedPort = ports.find((p) => {
+        if (!p) return false;
+        if (typeof p === "string") return p.toLowerCase() === raw.toLowerCase();
+        return (p.id && p.id.toLowerCase() === raw.toLowerCase()) || (p.name && p.name.toLowerCase() === raw.toLowerCase());
       });
-      return (found == null ? void 0 : found.name) ? `${found.name} (App)` : val;
+      if (matchedPort) {
+        if (typeof matchedPort === "string" && !matchedPort.includes("/") && !matchedPort.startsWith("com.")) {
+          return matchedPort;
+        }
+        if (typeof matchedPort === "object") {
+          const l = matchedPort.label || matchedPort.name;
+          if (l && !l.includes("/") && !l.startsWith("com.")) return l;
+        }
+      }
+
+      // 7. Strip prefix APP: if present
+      let cleanPkg = raw;
+      if (cleanPkg.startsWith("APP:")) {
+        cleanPkg = cleanPkg.replace(/^APP:/i, "").trim();
+      }
+
+      // 8. Search across all OTT and installed app lists
+      const appSources = [
+        typeof this.getActiveOttList === "function" ? this.getActiveOttList() : null,
+        window.TVAppsController && typeof window.TVAppsController.getActiveOttList === "function" ? window.TVAppsController.getActiveOttList() : null,
+        window.tvAppInstance ? window.tvAppInstance.activeOttList : null,
+        window.tvAppInstance && window.tvAppInstance.hotelData ? window.tvAppInstance.hotelData.active_ott : null,
+        this.hotelData ? this.hotelData.active_ott : null,
+        window.tvAppInstance ? window.tvAppInstance.installedApps : null,
+        this.installedApps,
+        this.availableOttApps
+      ];
+
+      for (const list of appSources) {
+        if (Array.isArray(list) && list.length > 0) {
+          const found = list.find((a) => {
+            if (!a) return false;
+            const pkg = a.package_name || a.packageName || a.package || a.id || "";
+            const name = a.name || a.title || a.label || "";
+            return (
+              (pkg && pkg.toLowerCase() === cleanPkg.toLowerCase()) ||
+              (name && name.toLowerCase() === cleanPkg.toLowerCase())
+            );
+          });
+          if (found && (found.name || found.label || found.title)) {
+            return found.name || found.label || found.title;
+          }
+        }
+      }
+
+      // 9. Known Popular Package Dictionary
+      const knownPackageNames = {
+        "com.google.android.youtube.tv": "YouTube",
+        "com.google.android.youtube": "YouTube",
+        "com.netflix.ninja": "Netflix",
+        "com.netflix.mediaclient": "Netflix",
+        "in.startv.hotstar": "Disney+ Hotstar",
+        "com.amazon.amazonvideo.livingroom": "Prime Video",
+        "com.amazon.avod.thirdpartyclient": "Prime Video",
+        "com.graymatrix.did": "Zee5",
+        "com.sonyliv": "SonyLIV",
+        "com.jio.media.ondemand": "JioCinema",
+        "com.android.vending": "Google Play Store",
+        "org.videolan.vlc": "VLC Player",
+        "com.plexapp.android": "Plex",
+        "com.spotify.tv.android": "Spotify",
+        "com.mxtech.videoplayer.ad": "MX Player",
+        "com.mxtech.videoplayer.pro": "MX Player",
+        "com.google.android.tv.dtvinput": "Live TV",
+        "com.android.tv": "Live TV"
+      };
+
+      const lowerClean = cleanPkg.toLowerCase();
+      if (knownPackageNames[lowerClean]) {
+        return knownPackageNames[lowerClean];
+      }
+
+      // 10. Fallback: If it's a package or process name (e.g. com.foo.bar/.MyService or com.company.app)
+      // Extract a clean human-readable name, NEVER output raw package/process name
+      if (cleanPkg.includes("/") || cleanPkg.includes(".")) {
+        let base = cleanPkg.split("/")[0];
+        const parts = base.split(".").filter(Boolean);
+        if (parts.length > 0) {
+          let candidate = parts[parts.length - 1];
+          if (candidate.length <= 2 && parts.length > 1) {
+            candidate = parts[parts.length - 2];
+          }
+          if (candidate) {
+            return candidate.charAt(0).toUpperCase() + candidate.slice(1).replace(/[-_]/g, " ");
+          }
+        }
+      }
+
+      return cleanPkg || "Live TV";
+    } catch (err) {
+      console.warn("[TVSettings] Error in getPortDisplayLabel:", err);
+      return "Live TV";
+    }
+  },
+  getSelectedPortDisplayLabel() {
+    try {
+      const val = this.liveTvSelectedPort || this.getResolvedPortPreference();
+      return this.getPortDisplayLabel(val);
     } catch (err) {
       console.warn("[TVSettings] Error in getSelectedPortDisplayLabel:", err);
-      return this.liveTvSelectedPort || "HDMI 1";
+      return "Live TV";
     }
   },
   _persistPort(port, label) {
@@ -481,7 +627,8 @@ window.TVSettingsController = {
       this.liveTvSelectedPort = pkgName;
       this.hasUnsavedChanges = true;
       this.closeInputMenu();
-      this.showToast(`Selected ${app.name || pkgName}. Click 'Save Configuration' to save.`);
+      const appLabel = (app && app.name) ? app.name : this.getPortDisplayLabel(pkgName);
+      this.showToast(`Selected ${appLabel}. Click 'Save Configuration' to save.`);
     } catch (e) {
       console.warn("[TVSettings] selectApp error:", e);
     }

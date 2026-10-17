@@ -20,7 +20,8 @@
     },
 
     init: function () {
-      this.isWebOS = typeof window.webOS !== 'undefined' && typeof window.webOS.service !== 'undefined';
+      var ua = typeof navigator !== 'undefined' ? (navigator.userAgent || '') : '';
+      this.isWebOS = (typeof window.PalmServiceBridge !== 'undefined' || /web0s|webos/i.test(ua)) && !/android/i.test(ua);
       this.deviceInfo.deviceId = window.ApiService ? window.ApiService.getDeviceId() : 'LG-TV-' + Date.now();
 
       if (this.isWebOS) {
