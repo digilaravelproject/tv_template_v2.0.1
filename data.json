@@ -1,31 +1,39 @@
 {
   "status": true,
   "message": "Template version details fetched successfully.",
+  "server_time": "2026-11-09T15:45:50+05:30",
+  "timestamp": 1794219350086,
+  "timezone": "Asia\/Kolkata",
+  "utc_offset_seconds": 19800,
   "data": {
     "auth": {
-      "token": "lyEbRgvofHcxzjSeJM9B4cCuSOAXkA5oq3EQOfb5027rDFfp6BPVaEa3ZNMgYExCfF9O82JuvlocqsMz"
+      "token": "4zKJz2DxCivz6lbUctbSZAzuj2L5N0yrlVUi7uDapf9K80yUsxn1fBbRBnp3xgaozHrJCPmTJ4t5exjJ",
+      "is_demo": false,
+      "demo_expires_at": null,
+      "demo_days_left": null
     },
     "template": {
       "template_id": 2,
-      "latest_version": "2.0.1",
+      "latest_version": "8.5",
       "old_version": null,
-      "download_url": "https:\/\/tvapp.digiemperor.com\/storage\/templates\/theme_2_v2_0_1_1788939044.zip",
-      "uploaded_at": "2026-09-09T13:00:54+05:30",
+      "download_url": "https:\/\/app.paxtvlauncher.com\/storage\/templates\/theme_2_v8_5_1792224500.zip",
+      "uploaded_at": "2026-10-17T13:38:21+05:30",
       "is_update_available": false
     },
     "device": {
-      "room_no": "1111",
-      "device_id": "3d761ddf4a5d30a3",
-      "mac_address": "4A:2D:A4:DF:D7:89",
-      "ip_address": "10.0.2.15",
-      "model": "AOSP TV on x86",
-      "brand": "google",
-      "os_version": "16"
+      "room_no": "666",
+      "device_id": "LG-TV-MUB5TQUS-HJDB6G51",
+      "mac_address": "00:E0:91:AA:BB:CC",
+      "ip_address": "192.168.1.150",
+      "model": "WEBOS26_SIMULATOR",
+      "brand": "LG",
+      "os_version": "webOS 02.16.30"
     },
     "hotel": {
       "hotel_name": "Taj Mahal Palace, Mumbai",
       "city": "Mumbai",
       "hotel_location": "Apollo Bunder, Colaba, Mumbai, Maharashtra 400001, India",
+      "timezone": "Asia\/Kolkata",
       "description": "Welcome to Taj Mahal Palace, Mumbai. We are delighted to have you as our guest. Enjoy world-class hospitality, luxurious accommodations, fine dining, and exceptional service. We wish you a comfortable and memorable stay.",
       "owner_name": "Darshan Kondekar",
       "email": "darshankondekar01@gmail.com",
@@ -37,17 +45,17 @@
         "email": "reservations.mumbai@tajhotels.com"
       },
       "media": {
-        "logo_image": "https:\/\/tvapp.digiemperor.com\/uploads\/hotel_logos\/logo_1787134741_IsCa4jDl.webp",
-        "cover_image": "https:\/\/tvapp.digiemperor.com\/uploads\/hotel_images\/cover_1787134741_N2frsodd.webp",
+        "logo_image": "https:\/\/app.paxtvlauncher.com\/uploads\/hotel_logos\/logo_1794215091_GqhoSCVx.webp",
+        "cover_image": "https:\/\/app.paxtvlauncher.com\/uploads\/hotel_images\/cover_1787134741_N2frsodd.webp",
         "slider_images": [
-          "https:\/\/tvapp.digiemperor.com\/uploads\/hotel_sliders\/slider_1787134742_7t2R5goL.webp"
+          "https:\/\/app.paxtvlauncher.com\/uploads\/hotel_sliders\/slider_1787134742_7t2R5goL.webp"
         ]
       },
       "active_plan": {
         "plan_name": "Deluxe Plan",
-        "plan_price": "1999.00",
-        "purchase_date": "2026-07-08T13:25:00+05:30",
-        "expiry_date": "2029-12-31T13:25:00+05:30"
+        "plan_price": "1.00",
+        "purchase_date": "2026-11-07T12:55:25+05:30",
+        "expiry_date": "2026-12-07T12:55:25+05:30"
       }
     },
     "guest_info": null,
@@ -55,102 +63,182 @@
       {
         "id": "playstore",
         "name": "Google Play Store",
-        "package_name": "com.android.vending"
+        "package_name": "com.android.vending",
+        "icon_name": "google-play.svg",
+        "icon_slug": "google-play",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/google-play.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/google-play.svg"
       },
       {
         "id": "netflix",
         "name": "Netflix",
-        "package_name": "com.netflix.mediaclient"
+        "package_name": "com.netflix.mediaclient",
+        "icon_name": "netflix.svg",
+        "icon_slug": "netflix",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/netflix.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/netflix.svg"
       },
       {
         "id": "hotstar",
         "name": "Disney+ Hotstar",
-        "package_name": "in.startv.hotstar"
+        "package_name": "in.startv.hotstar",
+        "icon_name": "hotstar.svg",
+        "icon_slug": "hotstar",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/hotstar.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/hotstar.svg"
       },
       {
         "id": "prime",
         "name": "Amazon Prime Video",
-        "package_name": "com.amazon.avod.thirdpartyclient"
+        "package_name": "com.amazon.avod.thirdpartyclient",
+        "icon_name": "prime-video.svg",
+        "icon_slug": "prime-video",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/prime-video.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/prime-video.svg"
       },
       {
         "id": "zee5",
         "name": "Zee5",
-        "package_name": "com.graymatrix.did"
+        "package_name": "com.graymatrix.did",
+        "icon_name": "zee5.svg",
+        "icon_slug": "zee5",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/zee5.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/zee5.svg"
       },
       {
         "id": "sony-liv",
         "name": "Sony LIV",
-        "package_name": "com.sony.liv"
+        "package_name": "com.sony.liv",
+        "icon_name": "sonyliv.svg",
+        "icon_slug": "sonyliv",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/sonyliv.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/sonyliv.svg"
       },
       {
         "id": "jiocinema",
         "name": "JioCinema",
-        "package_name": "com.jio.media.ondemand"
+        "package_name": "com.jio.media.ondemand",
+        "icon_name": "jiocinema.svg",
+        "icon_slug": "jiocinema",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/jiocinema.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/jiocinema.svg"
       },
       {
         "id": "aha",
         "name": "Aha",
-        "package_name": "ka.alua.aha"
+        "package_name": "ka.alua.aha",
+        "icon_name": "aha.svg",
+        "icon_slug": "aha",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/aha.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/aha.svg"
       },
       {
         "id": "sun-nxt",
         "name": "Sun NXT",
-        "package_name": "com.suntv.sunnxt"
+        "package_name": "com.suntv.sunnxt",
+        "icon_name": "sun-nxt.svg",
+        "icon_slug": "sun-nxt",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/sun-nxt.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/sun-nxt.svg"
       },
       {
         "id": "mx-player",
         "name": "MX Player",
-        "package_name": "com.mxtech.videoplayer.ad"
+        "package_name": "com.mxtech.videoplayer.ad",
+        "icon_name": "mx-player.svg",
+        "icon_slug": "mx-player",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/mx-player.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/mx-player.svg"
       },
       {
         "id": "discovery",
         "name": "Discovery+",
-        "package_name": "com.discovery.discoveryplus.mobile"
+        "package_name": "com.discovery.discoveryplus.mobile",
+        "icon_name": "discovery-plus.svg",
+        "icon_slug": "discovery-plus",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/discovery-plus.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/discovery-plus.svg"
       },
       {
         "id": "altbalaji",
         "name": "ALTBalaji",
-        "package_name": "com.balaji.alt"
+        "package_name": "com.balaji.alt",
+        "icon_name": "altbalaji.svg",
+        "icon_slug": "altbalaji",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/altbalaji.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/altbalaji.svg"
       },
       {
         "id": "eros-now",
         "name": "Eros Now",
-        "package_name": "com.erosnow"
+        "package_name": "com.erosnow",
+        "icon_name": "eros-now.svg",
+        "icon_slug": "eros-now",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/eros-now.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/eros-now.svg"
       },
       {
         "id": "hungama-play",
         "name": "Hungama Play",
-        "package_name": "com.hungama.myplay.activity"
+        "package_name": "com.hungama.myplay.activity",
+        "icon_name": "hungama.svg",
+        "icon_slug": "hungama",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/hungama.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/hungama.svg"
       },
       {
         "id": "hoichoi",
         "name": "Hoichoi",
-        "package_name": "com.viewlift.hoichoi"
+        "package_name": "com.viewlift.hoichoi",
+        "icon_name": "hoichoi.svg",
+        "icon_slug": "hoichoi",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/hoichoi.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/hoichoi.svg"
       },
       {
         "id": "planet-marathi",
         "name": "Planet Marathi",
-        "package_name": "com.planetmarathi.ott"
+        "package_name": "com.planetmarathi.ott",
+        "icon_name": "planet-marathi.svg",
+        "icon_slug": "planet-marathi",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/planet-marathi.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/planet-marathi.svg"
       },
       {
         "id": "chaupal",
         "name": "Chaupal",
-        "package_name": "com.chaupal.app"
+        "package_name": "com.chaupal.app",
+        "icon_name": "chaupal.svg",
+        "icon_slug": "chaupal",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/chaupal.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/chaupal.svg"
       },
       {
         "id": "manoramamax",
         "name": "ManoramaMAX",
-        "package_name": "com.manoramamax.app"
+        "package_name": "com.manoramamax.app",
+        "icon_name": "manoramamax.svg",
+        "icon_slug": "manoramamax",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/manoramamax.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/manoramamax.svg"
       },
       {
         "id": "voot",
         "name": "Voot",
-        "package_name": "com.tv.v18.viola"
+        "package_name": "com.tv.v18.viola",
+        "icon_name": "voot.svg",
+        "icon_slug": "voot",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/voot.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/voot.svg"
       },
       {
         "id": "youtube",
         "name": "YouTube",
-        "package_name": "com.google.android.youtube.tv"
+        "package_name": "com.google.android.youtube.tv",
+        "icon_name": "youtube-1794217064.svg",
+        "icon_slug": "youtube-1794217064",
+        "icon_url": "https:\/\/app.paxtvlauncher.com\/images\/ott\/youtube-1794217064.svg",
+        "icon": "https:\/\/app.paxtvlauncher.com\/images\/ott\/youtube-1794217064.svg"
       }
     ],
     "menus": [
@@ -247,56 +335,60 @@
       {
         "sr_no": 1,
         "title": "Hotel Facility #1",
-        "description": "Experience the beauty of Taj Garden, a peaceful place with lush greenery and a relaxing atmosphere. Experience the beauty of Taj Garden, a peaceful place with lush greenery and a relaxing atmosphere. Experience the beauty of Taj Garden, a peaceful pl",
+        "description": "Experience the beauty of Taj Garden, a peaceful place with lush greenery and a relaxing atmosphere. Experiene the beauty of Taj Garden, a peaceful place with lush greenery and a relaxing atmosphere. Experience the beauty of Taj Garden, a peaceful pl",
         "features": [
           "fan 1",
           "fan 2",
           "fan 3",
           "fan 4"
         ],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/uploads\/hotel_gallery\/gallery_1787134743_SmlTeaCv.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/uploads\/hotel_gallery\/gallery_1787134743_SmlTeaCv.webp"
       },
       {
         "sr_no": 2,
-        "title": "Facility #2",
-        "description": "",
-        "features": [],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/uploads\/hotel_gallery\/gallery_1787134745_loivNn06.webp"
+        "title": "Hotel Facility #2",
+        "description": "hii",
+        "features": [
+          "aa"
+        ],
+        "image_url": "https:\/\/app.paxtvlauncher.com\/uploads\/hotel_gallery\/gallery_1787134745_loivNn06.webp"
       },
       {
         "sr_no": 3,
-        "title": "Facility #3",
-        "description": "",
-        "features": [],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/uploads\/hotel_gallery\/gallery_1787134746_nN2XehL0.webp"
+        "title": "Hotel Facility #3",
+        "description": "newww",
+        "features": [
+          "tessssr"
+        ],
+        "image_url": "https:\/\/app.paxtvlauncher.com\/uploads\/hotel_gallery\/gallery_1787134746_nN2XehL0.webp"
       },
       {
         "sr_no": 4,
-        "title": "Facility #4",
+        "title": "Hotel Facility #4",
         "description": "",
         "features": [],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/uploads\/hotel_gallery\/gallery_1787134747_n3LK088H.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/uploads\/hotel_gallery\/gallery_1787134747_n3LK088H.webp"
       },
       {
         "sr_no": 5,
-        "title": "Facility #5",
+        "title": "Hotel Facility #5",
         "description": "",
         "features": [],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/uploads\/hotel_gallery\/gallery_1787134749_4bXPrlaG.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/uploads\/hotel_gallery\/gallery_1787134749_4bXPrlaG.webp"
       },
       {
         "sr_no": 6,
-        "title": "Facility #6",
+        "title": "Hotel Facility #6",
         "description": "",
         "features": [],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/uploads\/hotel_gallery\/gallery_1787134750_0HxEkGJl.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/uploads\/hotel_gallery\/gallery_1787134750_0HxEkGJl.webp"
       },
       {
         "sr_no": 7,
-        "title": "Facility #7",
+        "title": "Hotel Facility #7",
         "description": "",
         "features": [],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/uploads\/hotel_gallery\/gallery_1787134751_g86qpxL1.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/uploads\/hotel_gallery\/gallery_1787134751_g86qpxL1.webp"
       }
     ],
     "amenities": [
@@ -304,37 +396,37 @@
         "sr_no": 2,
         "title": "Taj Garden",
         "description": "Experience the beauty of Taj Garden, a peaceful place with lush greenery and a relaxing atmosphere. Experience the beauty of Taj Garden, a peaceful place with lush greenery and a relaxing atmosphere. Experience the beauty of Taj Garden, a peaceful pl",
-        "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/amenities\/amenity_1786627121_r330g2CW.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/storage\/uploads\/amenities\/amenity_1786627121_r330g2CW.webp"
       },
       {
         "sr_no": 5,
         "title": "Swimming Pool",
         "description": "Enjoy a refreshing swim in our elegant pool, perfect for relaxation and leisure during stay.",
-        "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/amenities\/amenity_1786626925_GF7WBJ83.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/storage\/uploads\/amenities\/amenity_1786626925_GF7WBJ83.webp"
       },
       {
         "sr_no": 5,
         "title": "Fitness Center",
         "description": "Stay active with modern fitness equipment and a well-equipped gym for your daily workout.",
-        "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/amenities\/amenity_1786627101_cbAU4Qli.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/storage\/uploads\/amenities\/amenity_1786627101_cbAU4Qli.webp"
       },
       {
         "sr_no": 6,
         "title": "Fine Dining",
         "description": "Savor exquisite cuisine and elegant dining in a warm and inviting restaurant setting.",
-        "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/amenities\/amenity_1786626998_UyA4Szyn.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/storage\/uploads\/amenities\/amenity_1786626998_UyA4Szyn.webp"
       },
       {
         "sr_no": 6,
         "title": "Lounge & Bar",
         "description": "Unwind with refreshing beverages and a sophisticated ambience at our elegant lounge and bar.",
-        "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/amenities\/amenity_1786627228_EMW6g1P2.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/storage\/uploads\/amenities\/amenity_1786627228_EMW6g1P2.webp"
       },
       {
         "sr_no": 7,
         "title": "Garden View Room",
         "description": "Garden View Room: Relaxing room with elegant interiors, modern amenities, beautiful garden views.",
-        "image_url": "https:\/\/tvapp.digiemperor.com\/uploads\/amenities\/amenity_1787134822_1vFrHnPk.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/uploads\/amenities\/amenity_1787134822_1vFrHnPk.webp"
       }
     ],
     "room_info": [
@@ -342,29 +434,37 @@
         "sr_no": 1,
         "title": "Luxury Bathroom",
         "description": "Refresh and relax in a premium bathroom featuring modern fixtures, elegant interiors, and quality amenities.",
-        "specifications": [],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/room_infos\/amenity_1786626183_oTSVhfp6.webp"
+        "specifications": [
+          "editinggg"
+        ],
+        "image_url": "https:\/\/app.paxtvlauncher.com\/storage\/uploads\/room_infos\/amenity_1786626183_oTSVhfp6.webp"
       },
       {
         "sr_no": 1,
         "title": "Premium Room Comfort",
         "description": "Relax in a beautifully designed room with elegant interiors, comfortable furnishings, and a peaceful ambience.",
-        "specifications": [],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/room_infos\/amenity_1786626286_vX5XrTdN.webp"
+        "specifications": [
+          "s"
+        ],
+        "image_url": "https:\/\/app.paxtvlauncher.com\/storage\/uploads\/room_infos\/amenity_1786626286_vX5XrTdN.webp"
       },
       {
         "sr_no": 1,
         "title": "Elegant Living Space",
         "description": "Unwind in a spacious seating area with comfortable furnishings and beautiful views from your room.",
-        "specifications": [],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/room_infos\/amenity_1786626326_8o2WMzHY.webp"
+        "specifications": [
+          "Noooo"
+        ],
+        "image_url": "https:\/\/app.paxtvlauncher.com\/storage\/uploads\/room_infos\/amenity_1786626326_8o2WMzHY.webp"
       },
       {
         "sr_no": 1,
         "title": "In-Room Dining",
         "description": "Enjoy delicious meals and refreshments in the comfort and privacy of your room.",
-        "specifications": [],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/room_infos\/amenity_1786626248_PZMo0CLK.webp"
+        "specifications": [
+          "test"
+        ],
+        "image_url": "https:\/\/app.paxtvlauncher.com\/storage\/uploads\/room_infos\/amenity_1786626248_PZMo0CLK.webp"
       },
       {
         "sr_no": 1,
@@ -376,7 +476,7 @@
           "feture 3",
           "feture 4"
         ],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/storage\/uploads\/room_infos\/amenity_1786626222_TgqFasce.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/storage\/uploads\/room_infos\/amenity_1786626222_TgqFasce.webp"
       }
     ],
     "our_city": [
@@ -388,7 +488,7 @@
           "abcde",
           "qwo"
         ],
-        "image_url": "https:\/\/tvapp.digiemperor.com\/uploads\/our_city\/city_place_1789025752_cLHmVVGn.webp"
+        "image_url": "https:\/\/app.paxtvlauncher.com\/uploads\/our_city\/city_place_1789025752_cLHmVVGn.webp"
       }
     ],
     "airports": {
@@ -397,7 +497,11 @@
         "iata_code": "BOM",
         "city": "Mumbai"
       },
-      "secondary": null
+      "secondary": {
+        "name": "Navi Mumbai International Airport",
+        "iata_code": "NMI",
+        "city": "Mumbai"
+      }
     }
   }
 }

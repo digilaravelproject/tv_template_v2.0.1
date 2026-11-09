@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <defs>
+            <linearGradient id="jioGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#E5007D"/><stop offset="100%" stop-color="#A50058"/>
+            </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="110" fill="url(#jioGrad)"/>
+        <circle cx="256" cy="210" r="100" fill="#FFFFFF"/>
+        <path d="M225 160 L310 210 L225 260 Z" fill="#E5007D"/>
+        <text x="256" y="375" font-family="Plus Jakarta Sans, sans-serif" font-weight="900" font-size="46" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">JioCinema</text>
+    </svg>

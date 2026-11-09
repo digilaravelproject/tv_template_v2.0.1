@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <defs>
+            <linearGradient id="hungGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF3344"/><stop offset="100%" stop-color="#CC1122"/>
+            </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="110" fill="url(#hungGrad)"/>
+        <g transform="translate(256, 210)">
+            <circle cx="0" cy="0" r="90" fill="#FFFFFF"/>
+            <path d="M-18 -42 L36 0 L-18 42 Z" fill="#CC1122"/>
+            <circle cx="45" cy="-45" r="12" fill="#FFDD00"/>
+        </g>
+        <text x="256" y="375" font-family="Plus Jakarta Sans, sans-serif" font-weight="900" font-size="46" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">hungama <tspan font-weight="500" font-size="34">play</tspan></text>
+    </svg>

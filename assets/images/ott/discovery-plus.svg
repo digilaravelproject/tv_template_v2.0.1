@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <rect width="512" height="512" rx="110" fill="#001833"/>
+        <g transform="translate(256, 210)">
+            <circle cx="-30" cy="0" r="80" fill="none" stroke="#00A0FF" stroke-width="26"/>
+            <path d="M-30 -80 A80 80 0 0 1 50 0" fill="none" stroke="#FFCC00" stroke-width="26" stroke-linecap="round"/>
+            <path d="M50 0 A80 80 0 0 1 -30 80" fill="none" stroke="#00E676" stroke-width="26" stroke-linecap="round"/>
+            <path d="M70 -35 L70 35 M35 0 L105 0" stroke="#FF5500" stroke-width="22" stroke-linecap="round"/>
+        </g>
+        <text x="256" y="375" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="44" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">discovery<tspan fill="#FF5500">+</tspan></text>
+    </svg>

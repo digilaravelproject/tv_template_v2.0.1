@@ -7,6 +7,46 @@ window.TVAppsController = {
   toastMessage: "",
   toastTimer: null,
   hasSyncedInstalled: false,
+  // Icon cache for ultra-fast instant rendering
+  iconCache: {},
+  localOttSet: null,
+  localOttIcons: [
+    "aha.svg",
+    "altbalaji.svg",
+    "amazon-prime-video.svg",
+    "chaupal.svg",
+    "discovery-plus.svg",
+    "disney-hotstar.svg",
+    "eros-now.svg",
+    "google-play-store.svg",
+    "google-play.svg",
+    "hoichoi.svg",
+    "hotstar.svg",
+    "hungama-play.svg",
+    "hungama.svg",
+    "jiocinema.svg",
+    "manoramamax.svg",
+    "mx-player.svg",
+    "netflix.svg",
+    "planet-marathi.svg",
+    "prime-video.svg",
+    "sony-liv.svg",
+    "sonyliv.svg",
+    "sun-nxt.svg",
+    "voot.svg",
+    "youtube.svg",
+    "zee5.svg"
+  ],
+  getLocalOttSet() {
+    if (!this.localOttSet) {
+      this.localOttSet = new Set(this.localOttIcons.map((f) => f.toLowerCase().trim()));
+    }
+    return this.localOttSet;
+  },
+  getAppCacheKey(app) {
+    if (!app) return "";
+    return String(app.id || app.package_name || app.icon_name || app.name || "").toLowerCase().trim();
+  },
   getActiveOttList() {
     var _a, _b;
     const isWebOS = typeof window !== "undefined" && Boolean(
@@ -32,6 +72,11 @@ window.TVAppsController = {
         const name = (app.name || "").toLowerCase();
         return !pkg.includes("vending") && !pkg.includes("playstore") && !name.includes("play store") && !name.includes("playstore") && !name.includes("google play");
       });
+    }
+    if (Array.isArray(list) && list.length > 0) {
+      try {
+        list.forEach((app) => this.getAppIcon(app));
+      } catch (_) {}
     }
     return list;
   },
@@ -106,15 +151,88 @@ window.TVAppsController = {
   },
   getAppIcon(app) {
     if (!app) return "";
-    if (app.icon) return app.icon;
-    const id = (app.id || "").toLowerCase();
-    if (id.includes("netflix")) return "assets/images/apps/ic_netflix.png";
-    if (id.includes("youtube")) return "assets/images/apps/ic_youtube.png";
-    if (id.includes("hotstar")) return "assets/images/apps/ic_hotstar.png";
-    if (id.includes("prime")) return "assets/images/apps/ic_primevideo.png";
-    if (id.includes("zee5") || id.includes("zee")) return "assets/images/apps/ic_zee5.png";
-    if (id.includes("playstore") || id.includes("cast")) return "assets/images/apps/ic_googlecast.png";
-    return "";
+    const key = this.getAppCacheKey(app);
+    if (!this.iconCache) this.iconCache = {};
+
+    // Check cache first for fast display
+    if (this.iconCache[key] !== undefined) {
+      return this.iconCache[key];
+    }
+
+    let resolvedIcon = "";
+    const localSet = this.getLocalOttSet();
+
+    // Verify with icon_name: check if present in assets/images/ott folder
+    const rawIconName = (app.icon_name || "").trim();
+    const cleanIconName = rawIconName.split(/[\\/]/).pop().trim();
+
+    if (cleanIconName && localSet.has(cleanIconName.toLowerCase())) {
+      resolvedIcon = `assets/images/ott/${cleanIconName}`;
+    }
+    // If not in local folder, fetch from icon_url
+    else if (app.icon_url && typeof app.icon_url === "string" && app.icon_url.trim()) {
+      resolvedIcon = app.icon_url.trim();
+    }
+    // Fallback to app.icon if available
+    else if (app.icon && typeof app.icon === "string" && app.icon.trim()) {
+      resolvedIcon = app.icon.trim();
+    }
+    // Fallback: check if id or slug exists in local ott folder (e.g. youtube.svg)
+    else {
+      const candidates = [app.id, app.icon_slug].filter(Boolean);
+      for (const cand of candidates) {
+        const slug = String(cand).toLowerCase().trim();
+        const slugFile = slug.endsWith(".svg") ? slug : `${slug}.svg`;
+        if (slugFile && localSet.has(slugFile)) {
+          resolvedIcon = `assets/images/ott/${slugFile}`;
+          break;
+        }
+      }
+    }
+
+    // Cache the resolved icon
+    this.iconCache[key] = resolvedIcon;
+
+    // Fast preloading into browser image cache
+    if (resolvedIcon && typeof Image !== "undefined") {
+      try {
+        const img = new Image();
+        img.decoding = "async";
+        img.src = resolvedIcon;
+      } catch (_) {}
+    }
+
+    return resolvedIcon;
+  },
+  handleAppIconError(event, app) {
+    if (!app || !event || !event.target) return;
+    const key = this.getAppCacheKey(app);
+    const currentSrc = event.target.src || "";
+
+    // 1. If local file failed, try remote icon_url
+    const fallbackUrl = (app.icon_url || app.icon || "").trim();
+    if (fallbackUrl && !currentSrc.includes(fallbackUrl)) {
+      event.target.src = fallbackUrl;
+      this.iconCache[key] = fallbackUrl;
+      return;
+    }
+
+    // 2. If remote URL failed, try local fallback by id or slug if present
+    const candidates = [app.id, app.icon_slug].filter(Boolean);
+    for (const cand of candidates) {
+      const slug = String(cand).toLowerCase().trim();
+      const slugFile = slug.endsWith(".svg") ? slug : `${slug}.svg`;
+      const localFallback = `assets/images/ott/${slugFile}`;
+      if (this.getLocalOttSet().has(slugFile) && !currentSrc.includes(localFallback)) {
+        event.target.src = localFallback;
+        this.iconCache[key] = localFallback;
+        return;
+      }
+    }
+
+    // 3. If neither works, empty cache and hide image element to let acronym show
+    this.iconCache[key] = "";
+    event.target.style.display = "none";
   },
   getAppInitials(name) {
     if (!name) return "APP";

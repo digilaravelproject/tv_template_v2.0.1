@@ -574,6 +574,7 @@
                                      :alt="app.name"
                                      loading="lazy"
                                      decoding="async"
+                                     @error="handleAppIconError($event, app)"
                                      class="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] transition-transform duration-300"
                                      :class="activeAppFocusIndex === idx ? 'scale-110' : 'scale-100'">
                             </template>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <defs>
+            <linearGradient id="erosGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00B8D4"/><stop offset="100%" stop-color="#006064"/>
+            </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="110" fill="#0A0E17"/>
+        <circle cx="256" cy="205" r="85" fill="url(#erosGrad)"/>
+        <path d="M235 170 L295 205 L235 240 Z" fill="#FFFFFF"/>
+        <text x="256" y="355" font-family="Plus Jakarta Sans, sans-serif" font-weight="900" font-size="52" fill="#FFFFFF" text-anchor="middle">eros <tspan fill="#00E5FF">now</tspan></text>
+    </svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <defs>
+            <linearGradient id="hsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0A183D"/><stop offset="50%" stop-color="#0E2356"/><stop offset="100%" stop-color="#081026"/>
+            </linearGradient>
+            <linearGradient id="starGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFE875"/><stop offset="100%" stop-color="#FFB300"/>
+            </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="110" fill="url(#hsGrad)"/>
+        <g transform="translate(256, 230)">
+            <path d="M0 -120 L25 -35 L115 -35 L42 18 L70 100 L0 50 L-70 100 L-42 18 L-115 -35 L-25 -35 Z" fill="url(#starGold)"/>
+            <circle cx="0" cy="0" r="18" fill="#FFFFFF"/>
+        </g>
+        <text x="256" y="380" font-family="Plus Jakarta Sans, sans-serif" font-weight="900" font-size="52" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">hotstar</text>
+        <path d="M160 415 Q256 445 352 415" stroke="#1CD760" stroke-width="6" fill="none" stroke-linecap="round"/>
+    </svg>

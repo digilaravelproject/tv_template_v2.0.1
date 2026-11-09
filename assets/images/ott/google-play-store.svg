@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <defs>
+            <linearGradient id="gp1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00A0FF"/><stop offset="100%" stop-color="#0077FF"/>
+            </linearGradient>
+            <linearGradient id="gp2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00E377"/><stop offset="100%" stop-color="#00BA53"/>
+            </linearGradient>
+            <linearGradient id="gp3" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF3A44"/><stop offset="100%" stop-color="#D91E28"/>
+            </linearGradient>
+            <linearGradient id="gp4" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFC400"/><stop offset="100%" stop-color="#FF9500"/>
+            </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="110" fill="#1F2430"/>
+        <g transform="translate(100, 76) scale(0.62)">
+            <path d="M47.7 21.1C37.8 31.6 32 48.6 32 70.4v371.2c0 21.8 5.8 38.8 15.7 49.3l2.6 2.6L274 269.8v-5.6L50.3 18.5l-2.6 2.6z" fill="url(#gp1)"/>
+            <path d="M354.5 350.3l-80.5-80.5v-5.6l80.5-80.5 1.8 1 95.5 54.3c27.3 15.5 27.3 40.9 0 56.4l-95.5 54.4-1.8 1z" fill="url(#gp4)"/>
+            <path d="M356.3 349.3L274 267 47.7 493.5c9 9.5 23.8 10.7 40.7 1.1l267.9-145.3z" fill="url(#gp3)"/>
+            <path d="M356.3 184.7L88.4 32.4C71.5 22.8 56.7 24 47.7 33.5L274 267l82.3-82.3z" fill="url(#gp2)"/>
+        </g>
+    </svg>
