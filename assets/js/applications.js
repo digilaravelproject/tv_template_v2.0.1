@@ -51,8 +51,7 @@ window.TVAppsController = {
     var _a, _b;
     const isWebOS = typeof window !== "undefined" && Boolean(
       (window.WebOSDevice && window.WebOSDevice.isWebOS || window.parent && window.parent.WebOSDevice && window.parent.WebOSDevice.isWebOS) &&
-      !window.flutterBridge &&
-      !window.FlutterBridge &&
+      !(window.flutterBridge && typeof window.flutterBridge.isAvailable === "function" && window.flutterBridge.isAvailable()) &&
       !/android/i.test(navigator.userAgent || '')
     );
     let list = [];
@@ -73,11 +72,6 @@ window.TVAppsController = {
         return !pkg.includes("vending") && !pkg.includes("playstore") && !name.includes("play store") && !name.includes("playstore") && !name.includes("google play");
       });
     }
-    if (Array.isArray(list) && list.length > 0) {
-      try {
-        list.forEach((app) => this.getAppIcon(app));
-      } catch (_) {}
-    }
     return list;
   },
   async syncInstalledApps() {
@@ -87,8 +81,7 @@ window.TVAppsController = {
 
     const isFlutter = Boolean(
       (window.flutterBridge && typeof window.flutterBridge.isAvailable === "function" && window.flutterBridge.isAvailable()) ||
-      window.FlutterBridge ||
-      window.flutterBridge
+      (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function")
     );
 
     // 1. Android TV / Flutter Bridge (Highest priority)
@@ -147,6 +140,16 @@ window.TVAppsController = {
       } catch (err) {
         console.warn("[TVApps] webOS checkInstalledApps error:", err);
       }
+    }
+
+    // 3. Browser / Emulator Developer Mode Fallback:
+    // When running in a standard web browser (outside TV), display all configured apps so they can be previewed
+    if (!isFlutter && !isWebOS) {
+      this.activeOttList = baseList;
+      if (window.tvAppInstance) {
+        window.tvAppInstance.activeOttList = baseList;
+      }
+      return;
     }
   },
   getAppIcon(app) {
@@ -296,8 +299,7 @@ window.TVAppsController = {
 
     const isFlutter = Boolean(
       (window.flutterBridge && typeof window.flutterBridge.isAvailable === "function" && window.flutterBridge.isAvailable()) ||
-      window.FlutterBridge ||
-      window.flutterBridge
+      (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function")
     );
 
     if (isFlutter) {
