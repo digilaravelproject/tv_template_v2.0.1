@@ -363,6 +363,9 @@ window.TVSettingsController = {
         return matchedHdmi;
       }
       if (String(port).toUpperCase().startsWith("HDMI")) {
+        if (ports.length > 0) {
+          return ports[0];
+        }
         return port;
       }
       return this.getAppPackageName(port);
@@ -429,11 +432,30 @@ window.TVSettingsController = {
       // 2. HDMI Check (HDMI 1, HW1, com.mediatek.tvinput/.hdmi.HDMIInputService/HW1)
       if (upper === "HDMI" || /^HDMI[-_\s]?\d+$/i.test(raw)) {
         const m = raw.match(/\d+/);
-        return m ? `HDMI ${m[0]}` : "HDMI";
+        if (m) {
+          const num = parseInt(m[0], 10);
+          const ports = ((_a = this.hwData) == null ? void 0 : _a.availableTvPorts) || this.availableTvPorts || [];
+          if (ports.length > 0 && num > ports.length) {
+            return ports[0];
+          }
+          return `HDMI ${m[0]}`;
+        }
+        return "HDMI 1";
       }
-      if (raw.toLowerCase().includes(".hdmi.") || raw.toLowerCase().includes("hdmiinputservice")) {
-        const m = raw.match(/HW(\d+)/i) || raw.match(/HDMI[-_\s]?(\d+)/i);
-        return m ? `HDMI ${m[1]}` : "HDMI";
+      if (raw.toLowerCase().includes(".hdmi.") || raw.toLowerCase().includes("hdmiinputservice") || raw.toUpperCase().startsWith("HW")) {
+        const ports = ((_a = this.hwData) == null ? void 0 : _a.availableTvPorts) || this.availableTvPorts || [];
+        if (window.TVInputController && Array.isArray(window.TVInputController.inputPorts) && window.TVInputController.inputPorts.length > 0) {
+          const found = window.TVInputController.inputPorts.find(p => p.id === raw || p.model === raw);
+          if (found && (found.label || found.name)) return found.label || found.name;
+        }
+        const m = raw.match(/HDMI[-_\s]?(\d+)/i);
+        if (m) {
+          const num = parseInt(m[1], 10);
+          if (ports.length > 0 && num > ports.length) return ports[0];
+          return `HDMI ${m[1]}`;
+        }
+        if (ports.length > 0) return ports[0];
+        return "HDMI 1";
       }
 
       // 3. Tuner / Live TV / Antenna / DTV / Cable (e.g. com.mediatek.tvinput/.tuner.TunerInputService/HW1)
