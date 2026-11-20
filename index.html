@@ -9,6 +9,49 @@
 
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
     <link rel="stylesheet" href="assets/css/custom.css">
+
+    <!-- TV WebView Compatibility Polyfills (Chromium 50-80 TV Safe) -->
+    <script>
+        (function() {
+            if (typeof window.queueMicrotask !== "function") {
+                window.queueMicrotask = function(fn) {
+                    Promise.resolve().then(fn).catch(function(err) {
+                        setTimeout(function() { throw err; }, 0);
+                    });
+                };
+            }
+            if (!Array.prototype.flatMap) {
+                Array.prototype.flatMap = function(cb, thisArg) {
+                    return this.reduce(function(acc, x, i, arr) {
+                        return acc.concat(cb.call(thisArg, x, i, arr));
+                    }, []);
+                };
+            }
+            if (!Array.prototype.flat) {
+                Array.prototype.flat = function(depth) {
+                    depth = depth === undefined ? 1 : Math.floor(depth);
+                    if (depth < 1) return Array.prototype.slice.call(this);
+                    return (function flatten(arr, d) {
+                        return arr.reduce(function(acc, val) {
+                            return acc.concat(Array.isArray(val) && d > 0 ? flatten(val, d - 1) : val);
+                        }, []);
+                    })(this, depth);
+                };
+            }
+            if (typeof globalThis === "undefined") {
+                window.globalThis = window;
+            }
+            window.onerror = function(msg, url, lineNo, colNo, err) {
+                console.error('[WebViewJSError] ' + msg + ' (' + url + ':' + lineNo + ')');
+                if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === 'function') {
+                    try {
+                        window.FlutterBridge.postMessage(JSON.stringify({ type: 'JS_ERROR', message: msg + ' at ' + url + ':' + lineNo }));
+                    } catch(e) {}
+                }
+                return false;
+            };
+        })();
+    </script>
     <script>
         // Only load webOS adapter if running on native LG webOS TV (never on Android/Flutter)
         (function() {
