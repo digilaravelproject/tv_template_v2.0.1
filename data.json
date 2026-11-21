@@ -244,26 +244,26 @@
     "menus": [
       {
         "id": "hotel_menu",
-        "name": "Hotel Menu",
+        "name": "Hotel Information",
         "icon": "assets\/images\/icons\/hotelinfo.png",
         "status": "show",
         "sub_menus": [
           {
-            "id": "hotel_info",
-            "name": "Hotel Info",
-            "icon": "assets\/images\/icons\/hotelinfo.png",
+            "id": "amenities",
+            "name": "Amenities",
+            "icon": "assets\/images\/icons\/roomservice.png",
             "status": "show"
           },
           {
             "id": "room_info",
-            "name": "Room Info",
+            "name": "Room",
             "icon": "assets\/images\/icons\/amenities.png",
             "status": "show"
           },
           {
-            "id": "amenities",
-            "name": "Amenities",
-            "icon": "assets\/images\/icons\/roomservice.png",
+            "id": "hotel_info",
+            "name": "Facilities",
+            "icon": "assets\/images\/icons\/hotelinfo.png",
             "status": "show"
           }
         ]
@@ -287,36 +287,28 @@
         "status": "show"
       },
       {
-        "id": "interactive_services",
-        "name": "Interactive Services",
-        "icon": "assets\/images\/icons\/roomservice.png",
-        "status": "show",
-        "sub_menus": [
-          {
-            "id": "flights",
-            "name": "Flights",
-            "icon": "assets\/images\/icons\/flights.png",
-            "status": "show"
-          },
-          {
-            "id": "weather",
-            "name": "Weather",
-            "icon": "assets\/images\/icons\/weather.png",
-            "status": "show"
-          },
-          {
-            "id": "input",
-            "name": "Input",
-            "icon": "assets\/images\/icons\/input.png",
-            "status": "show"
-          },
-          {
-            "id": "settings",
-            "name": "Settings",
-            "icon": "assets\/images\/icons\/settings.png",
-            "status": "show"
-          }
-        ]
+        "id": "flights",
+        "name": "Flights",
+        "icon": "assets\/images\/icons\/flights.png",
+        "status": "show"
+      },
+      {
+        "id": "weather",
+        "name": "Weather",
+        "icon": "assets\/images\/icons\/weather.png",
+        "status": "show"
+      },
+      {
+        "id": "settings",
+        "name": "Settings",
+        "icon": "assets\/images\/icons\/settings.png",
+        "status": "show"
+      },
+      {
+        "id": "input",
+        "name": "TV Input",
+        "icon": "assets\/images\/icons\/input.png",
+        "status": "show"
       },
       {
         "id": "ourcity",

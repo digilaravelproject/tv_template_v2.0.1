@@ -7,6 +7,7 @@ window.TVAppsController = {
   toastMessage: "",
   toastTimer: null,
   hasSyncedInstalled: false,
+  isSyncingApps: false,
   // Icon cache for ultra-fast instant rendering
   iconCache: {},
   localOttSet: null,
@@ -65,6 +66,7 @@ window.TVAppsController = {
       else if (inst && Array.isArray((_a = inst.hotelData) == null ? void 0 : _a.active_ott)) list = inst.hotelData.active_ott;
       else if (Array.isArray((_b = this.hotelData) == null ? void 0 : _b.active_ott)) list = this.hotelData.active_ott;
     }
+
     if (isWebOS) {
       list = list.filter((app) => {
         const pkg = (app.package_name || app.id || "").toLowerCase();
@@ -72,7 +74,47 @@ window.TVAppsController = {
         return !pkg.includes("vending") && !pkg.includes("playstore") && !name.includes("play store") && !name.includes("playstore") && !name.includes("google play");
       });
     }
-    return list;
+
+    // Strict Dynamic De-duplication: 1 Unique ID or Package = 1 Card
+    const seen = new Set();
+    const uniqueList = [];
+
+    for (const app of list) {
+      if (!app) continue;
+
+      // Extract all potential unique identifiers from the backend/bridge app object
+      const pkg = String(app.package_name || app.package || app.packageName || "").trim().toLowerCase();
+      const id = String(app.id || "").trim().toLowerCase();
+      const slug = String(app.icon_slug || "").trim().toLowerCase();
+      const name = String(app.name || "").trim().toLowerCase();
+
+      // Dynamic key resolution: Prioritize package name (standard unique reverse-DNS), then id, then slug, then normalized name
+      const primaryKey = pkg || id || slug || name;
+      if (!primaryKey) continue;
+
+      // Normalize package name if it has extra dots/suffixes, or normalize name slug dynamically
+      // e.g. "com.amazon.avod.thirdpartyclient" -> "amazon.avod", "prime-video" -> "prime-video"
+      const normalizedKey = primaryKey
+        .replace(/^in\.startv\./, "com.")
+        .replace(/^tv\./, "com.")
+        .replace(/\.thirdpartyclient$/, "")
+        .replace(/\.tv$/, "");
+
+      // Check against seen identifier, package, and display name so no duplicate OTT app slips through
+      const nameKey = name.replace(/[^a-z0-9]/g, "");
+      const combinedKey = `${id || pkg}|${nameKey}`;
+
+      if (!seen.has(normalizedKey) && !seen.has(primaryKey) && (!nameKey || !seen.has(nameKey))) {
+        seen.add(normalizedKey);
+        seen.add(primaryKey);
+        if (id) seen.add(id);
+        if (pkg) seen.add(pkg);
+        if (nameKey) seen.add(nameKey);
+        uniqueList.push(app);
+      }
+    }
+
+    return uniqueList;
   },
   async syncInstalledApps() {
     var _a;
@@ -84,60 +126,88 @@ window.TVAppsController = {
       (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function")
     );
 
-    // 1. Android TV / Flutter Bridge (Highest priority)
-    if (isFlutter) {
-      try {
-        if (typeof window.flutterBridge?.getInstalledApps === "function") {
-          const installed = await window.flutterBridge.getInstalledApps();
-          if (Array.isArray(installed)) {
-            // Flutter bridge already verifies apps (matched with active_ott or smart hybrid fallback)
-            this.activeOttList = installed;
-            this.hasSyncedInstalled = true;
-            if (window.tvAppInstance) {
-              window.tvAppInstance.activeOttList = installed;
+    this.isSyncingApps = true;
+    if (window.tvAppInstance) {
+      window.tvAppInstance.isSyncingApps = true;
+    }
+
+    try {
+      // 1. Android TV / Flutter Bridge (Highest priority)
+      if (isFlutter) {
+        try {
+          if (typeof window.flutterBridge?.getInstalledApps === "function") {
+            const installed = await window.flutterBridge.getInstalledApps();
+            if (Array.isArray(installed) && installed.length > 0) {
+              this.activeOttList = installed;
+              this.hasSyncedInstalled = true;
+              if (window.tvAppInstance) {
+                window.tvAppInstance.activeOttList = installed;
+              }
+              console.log(`[TVApps] Synced with Flutter TV: ${installed.length} apps available`);
+              return;
             }
-            console.log(`[TVApps] Synced with Flutter TV: ${installed.length} apps available`);
-            return;
+          }
+        } catch (e) {
+          console.warn("[TVApps] Error querying installed apps from bridge (fallback to baseList):", e);
+        }
+        // Fallback: If bridge fails/times out or returns empty, retain baseList from hotelData
+        if (baseList.length > 0) {
+          this.activeOttList = baseList;
+          this.hasSyncedInstalled = true;
+          if (window.tvAppInstance) {
+            window.tvAppInstance.activeOttList = baseList;
           }
         }
-      } catch (e) {
-        console.warn("[TVApps] Error querying installed apps from bridge:", e);
+        return;
       }
-      return;
-    }
 
-    // 2. LG webOS (Only if PalmServiceBridge exists and NOT Android)
-    const isWebOS = typeof window !== "undefined" && Boolean(
-      window.PalmServiceBridge &&
-      (window.WebOSDevice?.isWebOS || window.parent?.WebOSDevice?.isWebOS) &&
-      !/android/i.test(navigator.userAgent || "")
-    );
-    const webosDev = typeof window !== "undefined" && (window.WebOSDevice || window.parent?.WebOSDevice);
+      // 2. LG webOS (Only if PalmServiceBridge exists and NOT Android)
+      const isWebOS = typeof window !== "undefined" && Boolean(
+        window.PalmServiceBridge &&
+        (window.WebOSDevice?.isWebOS || window.parent?.WebOSDevice?.isWebOS) &&
+        !/android/i.test(navigator.userAgent || "")
+      );
+      const webosDev = typeof window !== "undefined" && (window.WebOSDevice || window.parent?.WebOSDevice);
 
-    if (isWebOS && webosDev && typeof webosDev.checkInstalledApps === "function") {
-      try {
-        console.log("[TVApps] Checking webOS installed status for " + baseList.length + " server apps...");
-        const verified = await webosDev.checkInstalledApps(baseList);
-        this.activeOttList = verified;
+      if (isWebOS && webosDev && typeof webosDev.checkInstalledApps === "function") {
+        try {
+          console.log("[TVApps] Checking webOS installed status for " + baseList.length + " server apps...");
+          const verified = await webosDev.checkInstalledApps(baseList);
+          this.activeOttList = verified;
+          this.hasSyncedInstalled = true;
+          if (window.tvAppInstance) {
+            window.tvAppInstance.activeOttList = verified;
+          }
+          console.log(`[TVApps] Synced with TV: ${verified.length} of ${baseList.length} configured apps are installed`);
+          return;
+        } catch (err) {
+          console.warn("[TVApps] webOS checkInstalledApps error:", err);
+          if (baseList.length > 0) {
+            this.activeOttList = baseList;
+            this.hasSyncedInstalled = true;
+            if (window.tvAppInstance) {
+              window.tvAppInstance.activeOttList = baseList;
+            }
+          }
+        }
+        return;
+      }
+
+      // 3. Browser / Emulator Developer Mode Fallback:
+      // When running in a standard web browser (outside TV), display all configured apps so they can be previewed
+      if (!isFlutter && !isWebOS) {
+        this.activeOttList = baseList;
         this.hasSyncedInstalled = true;
         if (window.tvAppInstance) {
-          window.tvAppInstance.activeOttList = verified;
+          window.tvAppInstance.activeOttList = baseList;
         }
-        console.log(`[TVApps] Synced with TV: ${verified.length} of ${baseList.length} configured apps are installed`);
         return;
-      } catch (err) {
-        console.warn("[TVApps] webOS checkInstalledApps error:", err);
       }
-    }
-
-    // 3. Browser / Emulator Developer Mode Fallback:
-    // When running in a standard web browser (outside TV), display all configured apps so they can be previewed
-    if (!isFlutter && !isWebOS) {
-      this.activeOttList = baseList;
+    } finally {
+      this.isSyncingApps = false;
       if (window.tvAppInstance) {
-        window.tvAppInstance.activeOttList = baseList;
+        window.tvAppInstance.isSyncingApps = false;
       }
-      return;
     }
   },
   getAppIcon(app) {
@@ -150,33 +220,45 @@ window.TVAppsController = {
       return this.iconCache[key];
     }
 
+    if (app.icon && typeof app.icon === 'string' && app.icon.trim() !== '') {
+      this.iconCache[key] = app.icon.trim();
+      return this.iconCache[key];
+    }
+
     let resolvedIcon = "";
     const localSet = this.getLocalOttSet();
 
-    // Verify with icon_name: check if present in assets/images/ott folder
+    // 1. Verify with icon_name: check if present in assets/images/ott folder
     const rawIconName = (app.icon_name || "").trim();
     const cleanIconName = rawIconName.split(/[\\/]/).pop().trim();
 
     if (cleanIconName && localSet.has(cleanIconName.toLowerCase())) {
       resolvedIcon = `assets/images/ott/${cleanIconName}`;
     }
-    // If not in local folder, fetch from icon_url
+    // 2. If not in local folder, fetch from icon_url
     else if (app.icon_url && typeof app.icon_url === "string" && app.icon_url.trim()) {
       resolvedIcon = app.icon_url.trim();
     }
-    // Fallback to app.icon if available
-    else if (app.icon && typeof app.icon === "string" && app.icon.trim()) {
-      resolvedIcon = app.icon.trim();
-    }
-    // Fallback: check if id or slug exists in local ott folder (e.g. youtube.svg)
+    // 3. Smart Package & ID Fallback (Local SVG and PNG)
     else {
-      const candidates = [app.id, app.icon_slug].filter(Boolean);
-      for (const cand of candidates) {
-        const slug = String(cand).toLowerCase().trim();
-        const slugFile = slug.endsWith(".svg") ? slug : `${slug}.svg`;
-        if (slugFile && localSet.has(slugFile)) {
-          resolvedIcon = `assets/images/ott/${slugFile}`;
-          break;
+      const id = (app.id || "").toLowerCase();
+      const pkg = (app.package_name || app.package || app.packageName || "").toLowerCase();
+
+      if (id.includes("netflix") || pkg.includes("netflix") || pkg.includes("ninja")) resolvedIcon = "assets/images/apps/ic_netflix.png";
+      else if (id.includes("prime") || id.includes("amazon") || pkg.includes("amazonvideo") || pkg.includes("avod")) resolvedIcon = "assets/images/apps/ic_primevideo.png";
+      else if (id.includes("hotstar") || pkg.includes("hotstar")) resolvedIcon = "assets/images/apps/ic_hotstar.png";
+      else if (id.includes("youtube") || pkg.includes("youtube")) resolvedIcon = "assets/images/apps/ic_youtube.png";
+      else if (id.includes("zee5") || id.includes("zee") || pkg.includes("graymatrix")) resolvedIcon = "assets/images/apps/ic_zee5.png";
+      else if (id.includes("playstore") || pkg.includes("vending")) resolvedIcon = "assets/images/apps/ic_googlecast.png";
+      else {
+        const candidates = [app.id, app.icon_slug].filter(Boolean);
+        for (const cand of candidates) {
+          const slug = String(cand).toLowerCase().trim();
+          const slugFile = slug.endsWith(".svg") ? slug : `${slug}.svg`;
+          if (slugFile && localSet.has(slugFile)) {
+            resolvedIcon = `assets/images/ott/${slugFile}`;
+            break;
+          }
         }
       }
     }

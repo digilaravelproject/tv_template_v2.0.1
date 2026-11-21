@@ -542,8 +542,10 @@
         <!-- Top Header Bar -->
         <div class="flex items-center justify-between pb-4 border-b border-amber-500/30 flex-shrink-0">
             <div class="flex items-center gap-4">
-                <div class="w-13 h-13 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-600/15 border-2 border-amber-500/70 flex items-center justify-center text-3xl text-amber-400 shadow-[0_0_20px_rgba(179,138,45,0.4)] p-2">
-                    📱
+                <div class="w-13 h-13 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-600/15 border-2 border-amber-500/70 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(179,138,45,0.4)] p-2.5">
+                    <svg class="w-8 h-8 fill-currentColor" viewBox="0 0 24 24">
+                        <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+                    </svg>
                 </div>
                 <div>
                     <h1 class="text-3xl font-black uppercase tracking-[0.16em] text-amber-400 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
@@ -575,11 +577,26 @@
 
         <!-- 5-Column Applications Grid (Scrollbar Hidden with no-scrollbar, Extra Padding to Prevent Clipping) -->
         
-        <!-- Empty State (When no supported OTT apps are installed on TV) -->
-        <div x-show="getActiveOttList().length === 0" 
+        <!-- Loading State Placeholder (While syncInstalledApps is scanning TV packages) -->
+        <div x-show="isSyncingApps && getActiveOttList().length === 0" 
              class="w-full flex-1 flex flex-col items-center justify-center p-12 text-center my-6">
-            <div class="w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-4xl mb-4 text-amber-400">
-                📺
+            <div class="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(255,215,0,0.2)] mb-4">
+                <svg class="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Scanning TV Applications...</h3>
+            <p class="text-sm font-semibold text-slate-400 max-w-md">Detecting installed OTT streaming apps on your TV</p>
+        </div>
+
+        <!-- Empty State (When no supported OTT apps are installed on TV) -->
+        <div x-show="!isSyncingApps && getActiveOttList().length === 0" 
+             class="w-full flex-1 flex flex-col items-center justify-center p-12 text-center my-6">
+            <div class="w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(255,215,0,0.15)] mb-4">
+                <svg class="w-10 h-10 fill-currentColor" viewBox="0 0 24 24">
+                    <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
+                </svg>
             </div>
             <h3 class="text-2xl font-bold text-white mb-2" x-text="t('no_apps_title', 'No Applications Installed')">No Applications Installed</h3>
             <p class="text-sm font-semibold text-slate-400 max-w-md" x-text="t('no_apps_desc', 'No streaming applications detected. Please install apps from Google Play Store.')">
@@ -1858,7 +1875,7 @@
 
     <!-- Top Airport Header & Controller Bar -->
     <div
-        class="flex items-center justify-between bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-8 py-3 mb-3 shadow-2xl">
+        class="flex items-center justify-between bg-black/80 backdrop-blur-xl border-2 border-amber-500/50 rounded-2xl px-8 py-3 mb-3 shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_0_15px_rgba(179,138,45,0.1)]">
         <!-- Airport Title & Code -->
         <div class="flex items-center space-x-4">
             <div
@@ -1943,10 +1960,10 @@
 
     <!-- Departures / Arrivals Flight Board Container (Strict Zero Scrollbar) -->
     <div
-        class="flex-1 bg-slate-950/90 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between">
+        class="flex-1 bg-gradient-to-br from-[#121214]/95 via-[#0c0c0e]/95 to-black/95 backdrop-blur-2xl border-2 border-amber-500/60 rounded-3xl overflow-hidden shadow-[0_25px_70px_rgba(0,0,0,0.95),0_0_40px_rgba(255,215,0,0.12)] flex flex-col justify-between">
 
         <!-- Top Section: Tab Selector Bar -->
-        <div class="flex items-center justify-between border-b border-white/10 px-8 pt-3 pb-2.5 bg-white/[0.02]">
+        <div class="flex items-center justify-between border-b border-amber-500/30 px-8 pt-3 pb-2.5 bg-white/[0.02]">
             <div class="flex items-center space-x-4">
                 <!-- Departures Tab -->
                 <button id="flight-focus-tab_departures" 

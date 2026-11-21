@@ -386,13 +386,23 @@ function tvApp() {
     getMenuTitle(item) {
       try {
         if (!item) return "";
+        // If an explicit name is provided in the menu item (like "Facilities" or "Room"), prefer it
         const idKey = (item.id || "").toLowerCase().replace(/[\s-]+/g, "_");
         const nameKey = (item.name || "").toLowerCase().replace(/[\s-]+/g, "_");
         const key = idKey === "apps" ? "applications" : idKey === "livetv" ? "live_tv" : idKey === "ourcity" ? "our_city" : idKey;
-        const trKey = this.t(`icons.${key}`, "");
-        if (trKey && trKey !== `icons.${key}`) return trKey;
-        const trName = this.t(`icons.${nameKey}`, "");
-        if (trName && trName !== `icons.${nameKey}`) return trName;
+        
+        // Check translation by nameKey first if item has explicit name
+        if (nameKey) {
+          const trName = this.t(`icons.${nameKey}`, "");
+          if (trName && trName !== `icons.${nameKey}`) return trName;
+        }
+
+        // Check translation by id/key (skip hotel_info if name is Facilities or distinct)
+        if (idKey !== "hotel_info" || !item.name || item.name.toLowerCase().includes("hotel")) {
+          const trKey = this.t(`icons.${key}`, "");
+          if (trKey && trKey !== `icons.${key}`) return trKey;
+        }
+        
         return item.name || "";
       } catch (e) {
         return (item == null ? void 0 : item.name) || "";

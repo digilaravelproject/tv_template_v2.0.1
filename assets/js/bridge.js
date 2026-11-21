@@ -578,7 +578,7 @@ window.loadLocalJson = function(url) {
     async getInstalledApps() {
       try {
         if (isFlutterAvailable()) {
-          return await callNative("getInstalledApps", []);
+          return await callNative("getInstalledApps", [], 25000);
         }
         const webos = getWebOSDevice();
         if (webos && typeof webos.getInstalledApps === "function") {
