@@ -24,6 +24,7 @@ window.TVSettingsController = {
   inputSelectionState: "main",
   // 'main' | 'hdmi' | 'apps'
   availableTvPorts: ["HDMI 1", "HDMI 2", "HDMI 3"],
+  hdmiPortStatusMap: {},
   liveTvSelectedPort: localStorage.getItem("last_tv_input_port") || "HDMI 1",
   isSavingConfig: false,
   isRefreshingHw: false,
@@ -409,6 +410,35 @@ window.TVSettingsController = {
       return false;
     }
   },
+  isPortConnected(port) {
+    try {
+      if (!port) return false;
+      const portStr = (typeof port === "object" ? (port.portName || port.name || port.label || port.id || "") : String(port)).trim().toUpperCase();
+      const clean = portStr.replace(/[^A-Z0-9]/g, "");
+
+      // 1. Check from bridge status map
+      if (this.hdmiPortStatusMap && this.hdmiPortStatusMap[clean] !== undefined) {
+        return Boolean(this.hdmiPortStatusMap[clean]);
+      }
+
+      // 2. Check in TVInputController or this.inputPorts
+      const list = this.inputPorts || (window.TVInputController && window.TVInputController.inputPorts) || [];
+      if (Array.isArray(list) && list.length > 0) {
+        for (let i = 0; i < list.length; i++) {
+          const item = list[i];
+          const itemName = (item.portName || item.name || item.label || item.id || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+          if (itemName === clean || itemName.includes(clean) || clean.includes(itemName)) {
+            return item.isConnected === true || item.isConnected === "true" || item.hasSignal === true || item.hasSignal === "true";
+          }
+        }
+      }
+
+      // 3. Fallback: HDMI 1 is default connected Live TV / STB port
+      return clean === "HDMI1" || clean === "1";
+    } catch (_) {
+      return false;
+    }
+  },
   isSpecificAppSelected(app) {
     try {
       if (!app) return false;
@@ -686,10 +716,17 @@ window.TVSettingsController = {
           try {
             const tvInputs = await window.flutterBridge.getTvInputs();
             if (Array.isArray(tvInputs) && tvInputs.length > 0) {
-              const parsedPorts = tvInputs
-                .map((p) => typeof p === "string" ? p : p.label || p.name || p.id || p.model)
-                .filter(Boolean)
-                .filter(p => String(p).toUpperCase().includes("HDMI"));
+              this.hdmiPortStatusMap = {};
+              const parsedPorts = [];
+              tvInputs.forEach((item) => {
+                const pName = (typeof item === "string" ? item : item.portName || item.label || item.name || item.id || "").trim();
+                const isConn = item.isConnected === true || item.isConnected === "true" || item.hasSignal === true || item.hasSignal === "true";
+                if (pName.toUpperCase().includes("HDMI")) {
+                  parsedPorts.push(pName);
+                  const cleanKey = pName.toUpperCase().replace(/[^A-Z0-9]/g, "");
+                  this.hdmiPortStatusMap[cleanKey] = isConn;
+                }
+              });
               if (parsedPorts.length > 0) {
                 this.availableTvPorts = parsedPorts;
               }
