@@ -208,6 +208,10 @@ window.TVAppsController = {
       if (window.tvAppInstance) {
         window.tvAppInstance.isSyncingApps = false;
       }
+      this.$nextTick(() => {
+        this.activeAppFocusIndex = 0;
+        this.focusCurrentApp(0);
+      });
     }
   },
   getAppIcon(app) {
@@ -406,15 +410,24 @@ window.TVAppsController = {
       this.toastMessage = "";
     }, 2500);
   },
-  focusCurrentApp() {
+  focusCurrentApp(index) {
+    if (index === "header_back") {
+      const backBtn = document.getElementById("tv-header-back-btn");
+      if (backBtn) backBtn.focus();
+      document.querySelectorAll('[id^="app_card_"]').forEach((c) => c.classList.remove("active-app-card"));
+      return;
+    }
+    const safeIndex = typeof index === "number" && index >= 0 ? index : typeof this.activeAppFocusIndex === "number" ? this.activeAppFocusIndex : 0;
+    this.activeAppFocusIndex = safeIndex;
     this.$nextTick(() => {
-      if (typeof this.activeAppFocusIndex === "number") {
-        const el = document.getElementById(`app_card_${this.activeAppFocusIndex}`);
-        if (el) {
-          el.focus();
-          el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-        }
+      const targetCard = document.getElementById(`app_card_${safeIndex}`);
+      if (targetCard) {
+        targetCard.focus();
+        targetCard.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
       }
+      document.querySelectorAll('[id^="app_card_"]').forEach((c, idx) => {
+        c.classList.toggle("active-app-card", idx === safeIndex);
+      });
     });
   },
   handleApplicationsGridNavigation(e) {

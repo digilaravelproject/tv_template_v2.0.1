@@ -363,7 +363,17 @@
                                                       class="w-2 h-2 rounded-full bg-slate-600/70 border border-white/10 flex-shrink-0"
                                                       title="No Device Attached"></span>
 
+                                                <!-- Port Name (e.g. HDMI 1) -->
                                                 <span x-text="port"></span>
+
+                                                <!-- 🔌 / 📡 / 🎮 Device Symbol & Name when connected -->
+                                                <template x-if="isPortConnected(port) && getConnectedDeviceName(port)">
+                                                    <span class="text-[10px] font-semibold opacity-90 flex items-center gap-1 ml-1 text-emerald-300"
+                                                          :class="dashboardFocus === `hdmi_${pIdx}` ? 'text-black' : ''">
+                                                        <span x-text="getConnectedDeviceSymbol(port)"></span>
+                                                        <span x-text="getConnectedDeviceName(port)"></span>
+                                                    </span>
+                                                </template>
                                             </button>
                                         </template>
                                     </div>

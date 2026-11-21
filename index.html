@@ -530,7 +530,7 @@
      HOTEL LUXURY TV TEMPLATE v2.0.1 - APPLICATIONS COMPONENT
      Smart TV OTT Applications Grid with Flutter Native Bridge
      ============================================================ -->
-<div x-cloak x-show="['apps', 'applications'].includes(currentView)"
+<div x-show="['apps', 'applications'].includes(currentView)"
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0 scale-95"
      x-transition:enter-end="opacity-100 scale-100"
@@ -615,7 +615,7 @@
                      @focus="activeAppFocusIndex = idx; lastAppCardIndex = idx; (document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').blur());"
                      class="h-52 rounded-2xl flex flex-col items-center justify-between p-4 cursor-pointer transition-all duration-300 outline-none border text-center relative group select-none"
                      :class="{
-                         'bg-gradient-to-b from-amber-500/25 via-[#181818] to-black border-2 border-amber-400 shadow-[0_0_35px_rgba(255,215,0,0.7),0_12px_28px_rgba(0,0,0,0.95)] scale-[1.05] z-30 ring-2 ring-amber-300': activeAppFocusIndex === idx,
+                         'active-app-card bg-gradient-to-b from-amber-500/25 via-[#181818] to-black border-2 border-amber-400 shadow-[0_0_35px_rgba(255,215,0,0.7),0_12px_28px_rgba(0,0,0,0.95)] scale-[1.05] z-30 ring-2 ring-amber-300': activeAppFocusIndex === idx,
                          'bg-white/[0.04] border border-white/10 hover:border-amber-500/50 hover:bg-white/[0.08] hover:scale-[1.02]': activeAppFocusIndex !== idx
                      }">
 
@@ -698,6 +698,7 @@
     </div>
 
 </div>
+
 
         <!-- Screen Cast Screen -->
         <div x-show="['screen_cast', 'cast'].includes(currentView)"
@@ -857,248 +858,315 @@
         <div x-show="['weather'].includes(currentView)"
              x-cloak
              class="w-full flex-1 flex flex-col items-center justify-start px-12 pt-2 pb-4">
-<!-- Real-Time Weather Forecast Dashboard (Luxury TV Hospitality Design System) -->
-<div class="w-full flex-1 flex flex-col items-center justify-start px-12 pt-8 pb-4 select-none relative z-20 font-sans">
+<!-- ============================================================
+     HOTEL LUXURY TV TEMPLATE v2.0.1 — WEATHER DASHBOARD
+     Premium Atmospheric Telemetry (Hospitality TV Design System)
+     ============================================================ -->
+<div class="w-full max-w-[1560px] rounded-3xl border-2 border-amber-500/60 bg-gradient-to-br from-[#121214]/95 via-[#0d0d0f]/95 to-black/95 p-6 shadow-[0_25px_70px_rgba(0,0,0,0.95),inset_0_0_25px_rgba(179,138,45,0.15)] backdrop-blur-2xl flex flex-col justify-between relative overflow-hidden select-none font-sans">
 
-    <!-- Loading State Overlay -->
+    <!-- Ambient Golden Glow in background -->
+    <div class="absolute -top-32 left-1/3 w-[36rem] h-[36rem] bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Loading State -->
     <template x-if="weatherLoading && !weatherData">
-        <div class="w-full max-w-[1560px] min-h-[700px] rounded-3xl border-2 border-amber-500/60 bg-gradient-to-br from-[#121214]/95 via-[#0c0c0e]/95 to-black/95 p-16 shadow-[0_25px_70px_rgba(0,0,0,0.95),inset_0_0_25px_rgba(179,138,45,0.15)] backdrop-blur-2xl flex flex-col items-center justify-center text-center space-y-6">
-            <div class="w-20 h-20 border-4 border-amber-400/25 border-t-amber-400 rounded-full animate-spin"></div>
-            <p class="text-2xl font-black text-white tracking-wide">
-                Fetching Real-time Satellite Weather...
-            </p>
-            <p class="text-sm text-slate-300 font-medium">
-                Connecting to satellite weather service for <span class="text-amber-400 font-extrabold" x-text="weatherCity || 'your location'"></span>
-            </p>
+        <div class="w-full min-h-[600px] flex flex-col items-center justify-center text-center space-y-5">
+            <div class="w-14 h-14 border-4 border-amber-400/25 border-t-amber-400 rounded-full animate-spin"></div>
+            <p class="text-2xl font-black text-white tracking-wide">Fetching Real-time Satellite Weather...</p>
+            <p class="text-sm text-slate-400">Connecting to satellite weather service for <span class="text-amber-400 font-bold" x-text="weatherCity || 'your location'"></span></p>
         </div>
     </template>
 
-    <!-- Error State Overlay -->
+    <!-- Error State -->
     <template x-if="weatherError && !weatherData">
-        <div class="w-full max-w-[1560px] min-h-[700px] rounded-3xl border-2 border-rose-500/60 bg-gradient-to-br from-[#121214]/95 via-[#0c0c0e]/95 to-black/95 p-16 shadow-2xl backdrop-blur-2xl flex flex-col items-center justify-center text-center space-y-6">
-            <span class="text-6xl">⚠️</span>
-            <h3 class="text-3xl font-black text-rose-400 tracking-wide">
-                Weather Forecast Unavailable
-            </h3>
-            <p class="text-base text-slate-300 max-w-lg" x-text="weatherError"></p>
-            <button @click="refreshWeather()" 
-                    class="px-8 py-3 rounded-full bg-amber-400 text-black font-black text-sm hover:bg-amber-300 transition shadow-[0_0_25px_rgba(251,191,36,0.6)] cursor-pointer">
-                ↻ Retry Connection
-            </button>
+        <div class="w-full min-h-[600px] flex flex-col items-center justify-center text-center space-y-4">
+            <span class="text-5xl">⚠️</span>
+            <h3 class="text-2xl font-black text-rose-400">Weather Unavailable</h3>
+            <p class="text-sm text-slate-300 max-w-md" x-text="weatherError"></p>
+            <button @click="refreshWeather()" class="px-6 py-2 rounded-xl bg-amber-400 text-black font-black text-sm cursor-pointer hover:bg-amber-300 transition-all">↻ Retry</button>
         </div>
     </template>
 
-    <!-- Main Luxury Modal Container (Exact 1560px Wide Match with Applications & TV Inputs) -->
+    <!-- Main Content when weatherData exists -->
     <template x-if="weatherData">
-        <div class="w-full max-w-[1560px] max-h-[820px] rounded-3xl border-2 border-amber-500/60 bg-gradient-to-br from-[#121214]/95 via-[#0c0c0e]/95 to-black/95 p-7 shadow-[0_25px_70px_rgba(0,0,0,0.95),inset_0_0_25px_rgba(179,138,45,0.15)] backdrop-blur-2xl flex flex-col justify-between overflow-hidden relative">
+        <div class="flex flex-col gap-4 relative z-10">
 
-            <!-- Ambient Atmospheric Aura -->
-            <div class="absolute -top-32 left-1/3 w-[36rem] h-[36rem] bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-            <!-- ============================================================
-                 1. TOP HEADER BAR (Exact 1:1 Match with Applications & TV Inputs)
-                 ============================================================ -->
-            <div class="flex items-center justify-between pb-5 border-b border-amber-500/30 flex-shrink-0 relative z-10">
+            <!-- ══════════════════════════════════════════
+                 1. TOP HEADER & CONTROLLER BAR
+                 ══════════════════════════════════════════ -->
+            <div class="flex items-center justify-between pb-4 border-b border-amber-500/30">
+                <!-- Airport / City Title & Code -->
                 <div class="flex items-center gap-4">
-                    <!-- Glowing Amber Weather Icon -->
-                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-600/15 border-2 border-amber-500/70 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(179,138,45,0.4)] p-2 flex-shrink-0">
-                        <img :src="getWeatherIcon(weatherData.current.weatherCode)" 
-                             alt="Weather" 
-                             class="w-10 h-10 object-contain drop-shadow-md">
+                    <div class="w-12 h-12 rounded-xl bg-amber-400 text-black flex items-center justify-center p-2 font-black text-xl shadow-[0_0_20px_rgba(251,191,36,0.5)] flex-shrink-0">
+                        <img :src="getWeatherIcon(weatherData.current.weatherCode)" alt="weather" class="w-full h-full object-contain">
                     </div>
-                    <div class="text-left">
+                    <div>
                         <div class="flex items-center gap-3">
-                            <h1 class="text-3xl font-black uppercase tracking-[0.16em] text-amber-400 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] leading-tight"
-                                x-text="weatherData.city">
-                                MUMBAI
-                            </h1>
-                            <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-black uppercase tracking-widest border border-amber-500/50">
-                                LIVE
-                            </span>
+                            <span class="text-2xl font-black text-white tracking-wide uppercase" x-text="weatherData.city || 'MUMBAI'"></span>
+                            <span class="font-mono font-black text-xs px-2.5 py-0.5 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/40">LIVE</span>
                             <template x-if="weatherIsCached">
-                                <span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[11px] font-black uppercase tracking-widest border border-rose-500/50">
-                                    OFFLINE CACHED
-                                </span>
+                                <span class="font-mono font-black text-xs px-2.5 py-0.5 rounded-md bg-red-400/20 text-red-300 border border-red-400/40">OFFLINE</span>
                             </template>
                         </div>
-                        <p class="text-sm font-semibold text-slate-300 tracking-wide mt-0.5 flex items-center gap-2">
-                            <span class="text-amber-300 font-bold" x-text="getWeatherDesc(weatherData.current.weatherCode)">Clear Sky</span>
-                            <span>&bull;</span>
-                            <span>Live satellite telemetry & 7-day extended meteorological forecast</span>
+                        <p class="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                            <span class="text-amber-300 font-bold" x-text="getWeatherDesc(weatherData.current.weatherCode)"></span>
+                            <span>•</span>
+                            <span>Live satellite telemetry &amp; 7-day extended forecast</span>
                         </p>
                     </div>
                 </div>
 
-                <!-- Right Side: Real-Time Sync Badge & Refresh Action Button -->
-                <div class="flex items-center gap-4">
-                    <!-- Last Synced Pill -->
-                    <div class="px-4 py-2 rounded-full bg-amber-500/15 border border-amber-500/50 text-amber-300 text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>Synced:</span>
-                        <span class="text-white font-extrabold" x-text="weatherLastUpdated || 'Just Now'"></span>
+                <!-- Right Controls: Last Synced + Back Hint + Refresh Button -->
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse"></span>
+                        <span class="text-slate-400 font-bold uppercase tracking-wider text-[11px]">SYNCED:</span>
+                        <span class="text-amber-300 font-black" x-text="weatherLastUpdated || 'Just Now'"></span>
                     </div>
 
-                    <!-- Remote D-Pad Navigation Pill -->
-                    <div class="hidden sm:flex items-center gap-2 text-xs text-slate-300 font-bold px-4 py-2 bg-white/5 rounded-xl border border-white/10">
-                        <span>Use</span>
-                        <span class="px-2 py-0.5 rounded bg-black/80 border border-white/20 text-white font-mono text-[11px]">BACK</span>
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-400 font-semibold">
+                        <span>Press</span>
+                        <span class="px-1.5 py-0.5 rounded bg-black/80 border border-white/20 text-white font-mono text-[10px]">BACK</span>
                         <span>to return</span>
                     </div>
 
-                    <!-- Clickable / D-Pad Focusable Refresh Button -->
-                    <button id="tv-weather-refresh-btn" 
-                        @click="refreshWeather()"
-                        @keydown.up.prevent="(document.getElementById('tv-header-back-btn') && document.getElementById('tv-header-back-btn').focus())"
-                        tabindex="0"
-                        class="px-5 py-2.5 rounded-xl border-2 flex items-center space-x-2 transition-all cursor-pointer font-black text-xs tracking-wider uppercase shadow-md bg-amber-400 text-black border-amber-300 hover:bg-amber-300 hover:scale-105 focus:bg-amber-300 focus:scale-105 focus:shadow-[0_0_25px_rgba(251,191,36,0.9)] outline-none"
-                        :class="isRefreshing || weatherLoading ? 'opacity-50 pointer-events-none' : ''">
-                        <svg class="w-4 h-4 flex-shrink-0" :class="{ 'animate-spin': isRefreshing || weatherLoading }" fill="none"
-                            stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <button id="tv-weather-refresh-btn"
+                            @click="refreshWeather()"
+                            tabindex="0"
+                            class="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(251,191,36,0.35)] outline-none"
+                            :class="(isRefreshing || weatherLoading) ? 'opacity-50 pointer-events-none' : ''">
+                        <svg class="w-4 h-4 flex-shrink-0" :class="{ 'animate-spin': (isRefreshing || weatherLoading) }" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
-                        <span class="font-extrabold tracking-wide"
-                            x-text="(isRefreshing || weatherLoading) ? 'SYNCING...' : 'REFRESH'"></span>
+                        <span x-text="(isRefreshing || weatherLoading) ? 'SYNCING...' : 'REFRESH'"></span>
                     </button>
                 </div>
             </div>
 
-            <!-- ============================================================
-                 2. MIDDLE BODY: BENTO GRID (Spotlight + Atmospheric Metrics)
-                 ============================================================ -->
-            <div class="grid grid-cols-12 gap-6 my-5 items-stretch relative z-10">
-                
-                <!-- Left 5 Columns: Primary High-Impact Temperature & AQI Spotlight Card -->
-                <div class="col-span-5 rounded-2xl bg-black/60 border-2 border-amber-500/40 p-6 flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-md">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black uppercase tracking-widest text-slate-400">Current Temperature</span>
-                            <span class="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-400/30"
-                                  x-text="getWeatherDesc(weatherData.current.weatherCode)"></span>
-                        </div>
-                        
-                        <!-- Big Temperature Display -->
-                        <div class="flex items-baseline gap-4 mt-3">
-                            <span class="text-6xl lg:text-7xl font-black text-white tracking-tighter drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)] leading-none font-sans">
-                                <span x-text="weatherData.current.temp !== null ? (weatherData.current.temp > 0 ? '+' : '') + weatherData.current.temp + '°C' : '--°C'"></span>
-                            </span>
-                            <template x-if="weatherData.current.feelsLike !== null">
-                                <span class="text-slate-300 text-sm font-bold">
-                                    Feels <strong class="text-[#ffc700] font-black text-base" x-text="weatherData.current.feelsLike + '°C'"></strong>
-                                </span>
-                            </template>
-                        </div>
+            <!-- ══════════════════════════════════════════
+                 2. MIDDLE ROW: SPOTLIGHT + 4 METRIC CARDS
+                 ══════════════════════════════════════════ -->
+            <div class="grid grid-cols-12 gap-4">
+
+                <!-- LEFT SPOTLIGHT CARD (5 cols ~42%) -->
+                <div class="col-span-5 rounded-2xl border border-amber-500/40 bg-black/60 p-5 flex flex-col justify-between relative overflow-hidden shadow-lg">
+                    <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent pointer-events-none"></div>
+
+                    <!-- Header inside card -->
+                    <div class="flex items-center justify-between relative z-10">
+                        <span class="text-[11px] font-black uppercase tracking-widest text-slate-400">Current Conditions</span>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 uppercase tracking-wider"
+                              x-text="getWeatherDesc(weatherData.current.weatherCode)"></span>
                     </div>
 
-                    <!-- AQI Card Inside Spotlight -->
-                    <template x-if="weatherData.current.aqi !== null">
-                        <div class="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <span class="text-xs font-black text-slate-300 tracking-wider">AIR QUALITY</span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-                                <span class="text-xs font-black tracking-wider uppercase" 
-                                      :class="getAqiInfo(weatherData.current.aqi).textClass"
-                                      x-text="getAqiInfo(weatherData.current.aqi).label">
-                                </span>
+                    <!-- Center: 3D Weather Icon + Temperature -->
+                    <div class="flex items-center justify-center gap-5 my-4 relative z-10">
+                        <img :src="getWeatherIcon(weatherData.current.weatherCode)"
+                             alt="weather"
+                             class="w-28 h-28 object-contain filter drop-shadow-[0_10px_25px_rgba(251,191,36,0.35)]">
+                        <div>
+                            <div class="text-6xl font-black text-white tracking-tight leading-none"
+                                 x-text="weatherData.current.temp !== null ? (weatherData.current.temp > 0 ? '+' : '') + weatherData.current.temp + '°C' : '--°C'">
                             </div>
-                            <span class="px-3 py-1 rounded-lg text-xs font-black tracking-wider border shadow-sm"
-                                  :class="getAqiInfo(weatherData.current.aqi).bgClass + ' ' + getAqiInfo(weatherData.current.aqi).textClass">
-                                AQI <strong x-text="weatherData.current.aqi"></strong>
-                            </span>
+                            <div class="text-sm font-semibold text-slate-300 mt-2" x-show="weatherData.current.feelsLike !== null">
+                                Feels <span class="font-black text-amber-300 text-base" x-text="weatherData.current.feelsLike + '°C'"></span>
+                            </div>
                         </div>
-                    </template>
-                </div>
-
-                <!-- Right 7 Columns: 6 Atmospheric Metrics Bento Grid -->
-                <div class="col-span-7 grid grid-cols-3 gap-3.5">
-                    <!-- 1. Feels Like -->
-                    <div class="p-4 rounded-2xl bg-black/60 border-2 border-amber-500/35 flex flex-col justify-center shadow-md backdrop-blur-md">
-                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block" x-text="t('weather_feels', 'Feels Like')">Feels Like</span>
-                        <span class="text-2xl font-black text-[#ffc700] mt-1" x-text="weatherData.current.feelsLike !== null ? weatherData.current.feelsLike + '°C' : '--'"></span>
                     </div>
 
-                    <!-- 2. Humidity -->
-                    <div class="p-4 rounded-2xl bg-black/60 border-2 border-amber-500/35 flex flex-col justify-center shadow-md backdrop-blur-md">
-                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block" x-text="t('weather_humidity', 'Humidity')">Humidity</span>
-                        <span class="text-2xl font-black text-white mt-1" x-text="weatherData.current.humidity !== null ? weatherData.current.humidity + '%' : '--'"></span>
-                    </div>
-
-                    <!-- 3. Wind Speed -->
-                    <div class="p-4 rounded-2xl bg-black/60 border-2 border-amber-500/35 flex flex-col justify-center shadow-md backdrop-blur-md">
-                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block" x-text="t('weather_wind', 'Wind')">Wind</span>
-                        <span class="text-2xl font-black text-white mt-1" x-text="weatherData.current.wind !== null ? weatherData.current.wind + ' KM/H' : '--'"></span>
-                    </div>
-
-                    <!-- 4. Pressure -->
-                    <div class="p-4 rounded-2xl bg-black/60 border-2 border-amber-500/35 flex flex-col justify-center shadow-md backdrop-blur-md">
-                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block" x-text="t('weather_pressure', 'Pressure')">Pressure</span>
-                        <span class="text-2xl font-black text-white mt-1" x-text="weatherData.current.pressure !== null ? weatherData.current.pressure + ' MB' : '--'"></span>
-                    </div>
-
-                    <!-- 5. Sunrise -->
-                    <div class="p-4 rounded-2xl bg-black/60 border-2 border-amber-500/35 flex flex-col justify-center shadow-md backdrop-blur-md">
-                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block" x-text="t('weather_sunrise', 'Sunrise')">Sunrise</span>
-                        <span class="text-xl font-black text-[#ffc700] mt-1" x-text="formatTimeFromIso((weatherData.daily && weatherData.daily[0] ? weatherData.daily[0].sunrise : ''))"></span>
-                    </div>
-
-                    <!-- 6. Sunset -->
-                    <div class="p-4 rounded-2xl bg-black/60 border-2 border-amber-500/35 flex flex-col justify-center shadow-md backdrop-blur-md">
-                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block" x-text="t('weather_sunset', 'Sunset')">Sunset</span>
-                        <span class="text-xl font-black text-[#ffc700] mt-1" x-text="formatTimeFromIso((weatherData.daily && weatherData.daily[0] ? weatherData.daily[0].sunset : ''))"></span>
+                    <!-- Bottom: Clear Sky Pill + Air Quality -->
+                    <div class="flex items-center justify-between gap-3 pt-3 border-t border-white/10 relative z-10">
+                        <div class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-wider text-white"
+                             x-text="getWeatherDesc(weatherData.current.weatherCode)"></div>
+                        <template x-if="weatherData.current.aqi !== null">
+                            <div class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider border"
+                                 :class="getAqiInfo(weatherData.current.aqi).bgClass + ' ' + getAqiInfo(weatherData.current.aqi).textClass">
+                                <span>AIR QUALITY</span>
+                                <div class="w-8 h-2 rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500"></div>
+                                <span x-text="'AQI ' + weatherData.current.aqi + ' • ' + getAqiInfo(weatherData.current.aqi).label"></span>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
+                <!-- RIGHT 2x2 METRICS GRID (7 cols ~58%) -->
+                <div class="col-span-7 grid grid-cols-2 gap-4">
+
+                    <!-- Metric 1: FEELS LIKE -->
+                    <div class="rounded-2xl border border-amber-500/30 bg-black/60 p-4 flex items-center justify-between">
+                        <div class="flex flex-col justify-between h-full">
+                            <span class="text-[11px] font-black uppercase tracking-widest text-slate-400">FEELS LIKE</span>
+                            <div>
+                                <div class="text-4xl font-black text-amber-300 my-0.5"
+                                     x-text="weatherData.current.feelsLike !== null ? weatherData.current.feelsLike + '°C' : '--'"></div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">REALFEEL INDEX</span>
+                            </div>
+                        </div>
+                        <!-- Thermometer SVG -->
+                        <div class="w-12 h-16 flex items-center justify-center">
+                            <svg viewBox="0 0 32 80" class="w-8 h-16" fill="none">
+                                <rect x="11" y="4" width="10" height="52" rx="5" fill="rgba(255,255,255,0.06)" stroke="rgba(251,191,36,0.4)" stroke-width="2"/>
+                                <rect x="14" y="20" width="4" height="36" rx="2" fill="#fbbf24"/>
+                                <circle cx="16" cy="64" r="10" fill="#fbbf24" stroke="rgba(251,191,36,0.6)" stroke-width="2"/>
+                                <line x1="22" y1="14" x2="26" y2="14" stroke="rgba(251,191,36,0.5)" stroke-width="2"/>
+                                <line x1="22" y1="26" x2="26" y2="26" stroke="rgba(251,191,36,0.5)" stroke-width="2"/>
+                                <line x1="22" y1="38" x2="26" y2="38" stroke="rgba(251,191,36,0.5)" stroke-width="2"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Metric 2: HUMIDITY -->
+                    <div class="rounded-2xl border border-amber-500/30 bg-black/60 p-4 flex items-center justify-between">
+                        <div class="flex flex-col justify-between h-full">
+                            <span class="text-[11px] font-black uppercase tracking-widest text-slate-400">HUMIDITY</span>
+                            <div>
+                                <div class="text-4xl font-black text-white my-0.5"
+                                     x-text="weatherData.current.humidity !== null ? weatherData.current.humidity + '%' : '--'"></div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">MOISTURE LEVEL</span>
+                            </div>
+                        </div>
+                        <!-- Circular Gauge SVG -->
+                        <div class="w-16 h-16 relative flex items-center justify-center">
+                            <svg viewBox="0 0 36 36" class="w-16 h-16 -rotate-90">
+                                <path class="text-white/10" stroke-width="3.5" stroke="currentColor" fill="none"
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="text-sky-400" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none"
+                                      :stroke-dasharray="(weatherData.current.humidity || 0) + ', 100'"
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <span class="absolute text-lg">💧</span>
+                        </div>
+                    </div>
+
+                    <!-- Metric 3: WIND -->
+                    <div class="rounded-2xl border border-amber-500/30 bg-black/60 p-4 flex items-center justify-between">
+                        <div class="flex flex-col justify-between h-full">
+                            <span class="text-[11px] font-black uppercase tracking-widest text-slate-400">WIND</span>
+                            <div>
+                                <div class="text-4xl font-black text-white my-0.5 flex items-baseline gap-1.5">
+                                    <span x-text="weatherData.current.wind !== null ? weatherData.current.wind : '--'"></span>
+                                    <span class="text-base font-black text-amber-400">KM/H</span>
+                                </div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">VELOCITY FEED</span>
+                            </div>
+                        </div>
+                        <!-- Compass SVG -->
+                        <div class="w-16 h-16 flex items-center justify-center">
+                            <svg viewBox="0 0 64 64" class="w-14 h-14" fill="none">
+                                <circle cx="32" cy="32" r="28" stroke="rgba(251,191,36,0.4)" stroke-width="2" fill="rgba(0,0,0,0.5)"/>
+                                <circle cx="32" cy="32" r="20" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                                <text x="32" y="11" text-anchor="middle" fill="#fbbf24" font-size="7" font-weight="900" font-family="sans-serif">N</text>
+                                <text x="32" y="59" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="6" font-family="sans-serif">S</text>
+                                <text x="56" y="34" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="6" font-family="sans-serif">E</text>
+                                <text x="8" y="34" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="6" font-family="sans-serif">W</text>
+                                <polygon points="32,15 29,32 32,29 35,32" fill="#fbbf24"/>
+                                <polygon points="32,49 35,32 32,35 29,32" fill="rgba(255,255,255,0.3)"/>
+                                <circle cx="32" cy="32" r="2.5" fill="#fbbf24"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Metric 4: SUN CYCLE -->
+                    <div class="rounded-2xl border border-amber-500/30 bg-black/60 p-4 flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-black uppercase tracking-widest text-slate-400">SUN CYCLE</span>
+                            <span class="text-[10px] font-mono text-amber-300 font-bold">SOLAR HORIZON</span>
+                        </div>
+                        <!-- Arc Graphic -->
+                        <div class="flex justify-center my-1">
+                            <svg viewBox="0 0 120 48" class="w-full max-h-12">
+                                <path d="M 10 44 A 50 40 0 0 1 110 44" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3" stroke-linecap="round"/>
+                                <path d="M 10 44 A 50 40 0 0 1 110 44" fill="none" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+                                <circle cx="60" cy="8" r="5" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <!-- Times -->
+                        <div class="flex items-center justify-between pt-1">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Dawn</span>
+                                <span class="text-xs font-mono font-black text-amber-300"
+                                      x-text="formatTimeFromIso((weatherData.daily && weatherData.daily[0] ? weatherData.daily[0].sunrise : ''))">--:--</span>
+                            </div>
+                            <div class="flex flex-col text-right">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Dusk</span>
+                                <span class="text-xs font-mono font-black text-orange-400"
+                                      x-text="formatTimeFromIso((weatherData.daily && weatherData.daily[0] ? weatherData.daily[0].sunset : ''))">--:--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
-            <!-- ============================================================
-                 3. BOTTOM SECTION: 7-DAY EXTENDED FORECAST CARDS
-                 ============================================================ -->
-            <div class="relative z-10 pt-4 border-t border-amber-500/30">
-                <div class="flex items-center justify-between mb-3 px-1">
-                    <h3 class="text-xs font-black uppercase tracking-widest text-slate-200 flex items-center gap-2">
-                        <span class="text-amber-400">🗓️</span>
-                        <span>7-Day Extended Forecast</span>
-                    </h3>
-                    <span class="text-xs text-amber-400 font-extrabold uppercase tracking-wider">Daily High / Low</span>
+            <!-- ══════════════════════════════════════════
+                 3. BOTTOM ROW: 7-DAY EXTENDED FORECAST STRIP
+                 ══════════════════════════════════════════ -->
+            <div>
+                <div class="flex items-center justify-between mb-2.5 px-1">
+                    <span class="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
+                        <span>📅</span>
+                        <span>7-DAY EXTENDED FORECAST</span>
+                    </span>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">DAILY HIGH / LOW</span>
                 </div>
 
-                <!-- 7 Forecast Cards Grid -->
-                <div class="grid grid-cols-7 gap-3.5">
+                <div class="grid grid-cols-7 gap-3">
                     <template x-for="(day, idx) in weatherData.daily" :key="idx">
-                        <div class="rounded-2xl p-3.5 flex flex-col items-center justify-between text-center transition-all duration-300 shadow-md min-h-[160px]"
-                             :class="idx === 0 
-                                ? 'bg-gradient-to-b from-[#2a2212] via-[#1a150c] to-[#0c0c0e] border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.35)] scale-[1.02]' 
-                                : 'bg-black/60 border-2 border-amber-500/30 hover:border-amber-400/60'">
-                            
+                        <div class="rounded-2xl p-3 flex flex-col items-center justify-between text-center transition-all duration-200 relative overflow-hidden"
+                             :class="idx === 0
+                                 ? 'bg-gradient-to-b from-amber-500/20 via-black to-black border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.3)] scale-[1.02]'
+                                 : 'bg-black/60 border border-white/10 hover:border-amber-400/50'">
+
                             <!-- Day Name -->
-                            <span class="text-xs font-black tracking-wider uppercase"
-                                  :class="idx === 0 ? 'text-amber-300' : 'text-slate-100'"
+                            <span class="text-xs font-black uppercase tracking-wider"
+                                  :class="idx === 0 ? 'text-amber-300' : 'text-slate-200'"
                                   x-text="formatWeatherDay(day.date, idx)">
                             </span>
 
                             <!-- Date -->
-                            <span class="text-[11px] font-bold text-slate-400 mt-0.5"
+                            <span class="text-[10px] font-bold text-slate-400 mt-0.5"
                                   x-text="formatWeatherDate(day.date)">
                             </span>
 
                             <!-- Weather Icon -->
-                            <img :src="getWeatherIcon(day.weatherCode)" 
+                            <img :src="getWeatherIcon(day.weatherCode)"
                                  :alt="getWeatherDesc(day.weatherCode)"
-                                 class="w-10 h-10 object-contain my-1.5 drop-shadow-md">
+                                 class="w-12 h-12 object-contain my-2 filter drop-shadow-md">
 
                             <!-- Weather Description -->
-                            <span class="text-[11px] font-bold text-slate-300 truncate max-w-full"
+                            <span class="text-[10px] font-bold text-slate-300 truncate w-full"
                                   x-text="getWeatherDesc(day.weatherCode)">
                             </span>
 
-                            <!-- Max / Min Temp -->
-                            <div class="mt-1 flex items-baseline gap-1 text-xs font-mono font-bold">
-                                <span class="text-amber-300 font-black text-sm" x-text="day.maxTemp !== null ? day.maxTemp + '°' : '--'"></span>
-                                <span class="text-slate-500">/</span>
-                                <span class="text-slate-400 font-semibold" x-text="day.minTemp !== null ? day.minTemp + '°' : '--'"></span>
+                            <!-- High / Low Temps -->
+                            <div class="flex items-baseline font-mono font-bold gap-1 mt-1.5">
+                                <span class="text-amber-300 font-black text-sm"
+                                      x-text="day.maxTemp !== null ? day.maxTemp + '°' : '--'"></span>
+                                <span class="text-slate-600 text-xs">/</span>
+                                <span class="text-slate-400 font-semibold text-xs"
+                                      x-text="day.minTemp !== null ? day.minTemp + '°' : '--'"></span>
                             </div>
                         </div>
                     </template>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════
+                 4. BOTTOM NAVIGATION HINT BAR
+                 ══════════════════════════════════════════ -->
+            <div class="flex items-center justify-between pt-2 border-t border-amber-500/20 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <div class="flex items-center gap-4">
+                    <span class="flex items-center gap-1.5">
+                        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-[9px]">OK</span>
+                        <span>Refresh Weather</span>
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-[9px]">BACK</span>
+                        <span>Exit to Menu</span>
+                    </span>
+                </div>
+                <div>
+                    <span>City: </span>
+                    <span class="text-amber-400 font-black" x-text="weatherCity || 'Mumbai'"></span>
                 </div>
             </div>
 
@@ -1679,7 +1747,17 @@
                                                       class="w-2 h-2 rounded-full bg-slate-600/70 border border-white/10 flex-shrink-0"
                                                       title="No Device Attached"></span>
 
+                                                <!-- Port Name (e.g. HDMI 1) -->
                                                 <span x-text="port"></span>
+
+                                                <!-- 🔌 / 📡 / 🎮 Device Symbol & Name when connected -->
+                                                <template x-if="isPortConnected(port) && getConnectedDeviceName(port)">
+                                                    <span class="text-[10px] font-semibold opacity-90 flex items-center gap-1 ml-1 text-emerald-300"
+                                                          :class="dashboardFocus === `hdmi_${pIdx}` ? 'text-black' : ''">
+                                                        <span x-text="getConnectedDeviceSymbol(port)"></span>
+                                                        <span x-text="getConnectedDeviceName(port)"></span>
+                                                    </span>
+                                                </template>
                                             </button>
                                         </template>
                                     </div>

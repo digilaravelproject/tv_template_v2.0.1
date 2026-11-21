@@ -410,18 +410,17 @@ window.TVSettingsController = {
       return false;
     }
   },
+  // Hardware connection check (real-time telemetry)
   isPortConnected(port) {
     try {
       if (!port) return false;
       const portStr = (typeof port === "object" ? (port.portName || port.name || port.label || port.id || "") : String(port)).trim().toUpperCase();
       const clean = portStr.replace(/[^A-Z0-9]/g, "");
 
-      // 1. Check from bridge status map
       if (this.hdmiPortStatusMap && this.hdmiPortStatusMap[clean] !== undefined) {
         return Boolean(this.hdmiPortStatusMap[clean]);
       }
 
-      // 2. Check in TVInputController or this.inputPorts
       const list = this.inputPorts || (window.TVInputController && window.TVInputController.inputPorts) || [];
       if (Array.isArray(list) && list.length > 0) {
         for (let i = 0; i < list.length; i++) {
@@ -432,11 +431,43 @@ window.TVSettingsController = {
           }
         }
       }
-
-      // 3. Fallback: HDMI 1 is default connected Live TV / STB port
-      return clean === "HDMI1" || clean === "1";
+      return false;
     } catch (_) {
       return false;
+    }
+  },
+
+  // Fetch broadcasted CEC device name
+  getConnectedDeviceName(port) {
+    try {
+      if (!port) return "";
+      const portStr = (typeof port === "object" ? (port.portName || port.name || port.label || port.id || "") : String(port)).trim().toUpperCase();
+      const clean = portStr.replace(/[^A-Z0-9]/g, "");
+      const list = this.inputPorts || (window.TVInputController && window.TVInputController.inputPorts) || [];
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i];
+        const itemName = (item.portName || item.name || item.label || item.id || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (itemName === clean || itemName.includes(clean) || clean.includes(itemName)) {
+          return item.deviceName || item.label || item.name || "";
+        }
+      }
+      return "";
+    } catch (_) {
+      return "";
+    }
+  },
+
+  // Device type symbol helper
+  getConnectedDeviceSymbol(port) {
+    try {
+      const devName = (this.getConnectedDeviceName(port) || "").toLowerCase();
+      if (!devName) return "🔌";
+      if (devName.includes("ps5") || devName.includes("playstation") || devName.includes("xbox") || devName.includes("game")) return "🎮";
+      if (devName.includes("tata") || devName.includes("airtel") || devName.includes("dish") || devName.includes("dth") || devName.includes("stb") || devName.includes("cable") || devName.includes("set-top")) return "📡";
+      if (devName.includes("apple") || devName.includes("fire") || devName.includes("roku") || devName.includes("chromecast") || devName.includes("stream")) return "📺";
+      return "🔌";
+    } catch (_) {
+      return "🔌";
     }
   },
   isSpecificAppSelected(app) {
